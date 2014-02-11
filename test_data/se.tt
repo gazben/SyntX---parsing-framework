@@ -1,0 +1,11 @@
+(example 2 (
+				abc
+				def
+				(
+					"ghi\n"
+					jkl
+					mno
+				)
+				pqr
+			)
+)
