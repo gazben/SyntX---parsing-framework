@@ -4,8 +4,6 @@
 namespace util {
 	namespace parser {
 		bool whitespace::test(base_rule::match_range &context, base_rule::match_range &the_match_range) {
-			if (context.first == context.second) return false;
-			
 			base_rule::match_range range;
 			base_rule::match_range local_context = context;
 

@@ -13,8 +13,6 @@ namespace util {
 		}
 
 		bool whitespace_not_newline::test(base_rule::match_range &context, base_rule::match_range &the_match_range) {
-			if (context.first == context.second) return false;
-			
 			base_rule::match_range range;
 			base_rule::match_range local_context = context;
 
