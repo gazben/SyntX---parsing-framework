@@ -32,11 +32,21 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Rule that matches a real number.
+		 */
 		class real : public base_rule {
 			public:
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
+
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new real(*this));
 				}
 		};

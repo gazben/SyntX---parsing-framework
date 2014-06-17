@@ -1,0 +1,8 @@
+namespace util {
+	/**
+	 * Contains the testing framework of the project.
+	 */
+	namespace tester {
+
+	}
+}

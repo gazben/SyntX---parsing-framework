@@ -32,14 +32,27 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * A rule that doesn't consume anything but reports a successful match.
+		 * As whitespace consumption is not a seperate rule but only an operator, this
+		 * rule is needed to consume whitespaces at the end of the text to get a full
+		 * match.
+		 */
 		class epsilon : public base_rule {
 			public:
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) {
+
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override {
 					the_match_range.first = the_match_range.second = context.first;
 					return true;
 				}
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new epsilon(*this));
 				}
 		};

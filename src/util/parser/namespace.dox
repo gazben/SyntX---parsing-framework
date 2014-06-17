@@ -1,0 +1,6 @@
+namespace util {
+	/**
+	 * Contains the class constituting the SyntX framework.
+	 */
+	namespace parser {}
+}

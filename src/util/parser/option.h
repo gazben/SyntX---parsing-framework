@@ -32,16 +32,30 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Rule that tries to match a given rule but returns a successful match
+		 * any way.
+		 */
 		class option : public base_rule {
 			private:
-				std::shared_ptr<base_rule> optional_rule;
+				std::shared_ptr<base_rule> optional_rule; /**< The optional rule. */
 
 			public:
+				/**
+				 * Constructor.
+				 * @param optional_rule the optional rule
+				 */
 				option(base_rule const &optional_rule) : optional_rule(optional_rule.clone()) {}
 
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new option(*this));
 				}
 		};

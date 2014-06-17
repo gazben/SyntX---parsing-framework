@@ -30,18 +30,34 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * A functor that can be used to debug grammars.
+		 * It prints the given strings at every match together with
+		 * the consumed text.
+		 */
 		class debug_action {
 			private:
-				std::string text_before;
-				std::string text_after;
-				std::ostream &stream;
+				std::string text_before;	/**< String to be printed before the matched text. */
+				std::string text_after;		/**< String to be printed after the matched text. */
+				std::ostream &stream;		/**< The stream onto which the action should print.*/
 
 			public:
+				/**
+				 * Constructor.
+				 * @param text_before the string to be printed before the matched text
+				 * @param text_after the string to be printed after the matched text
+				 * @param stream the stream onto which the action should print
+				 */
 				debug_action(std::string const &text_before = "", std::string const &text_after = "", std::ostream &stream = std::cout) :
 					text_before(text_before),
 					text_after(text_after),
 					stream(stream) {}
 
+				/**
+				 * The function call operator that is used when the \ref base_rule
+				 * activates the action after a successful match.
+				 * @param match the consumed text
+				 */
 				void operator()(std::string const &match) {
 					stream << text_before << match << text_after;
 				}

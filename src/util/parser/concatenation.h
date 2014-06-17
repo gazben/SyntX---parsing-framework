@@ -32,17 +32,32 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * A rule that will try to match two rules in concatenation - one after the other
+		 * in the given order with no unmatched characters in between.
+		 */
 		class concatenation : public base_rule {
 			private:
-				std::shared_ptr<base_rule> first;
-				std::shared_ptr<base_rule> second;
+				std::shared_ptr<base_rule> first;	/**< The first rule to match. */
+				std::shared_ptr<base_rule> second;	/**< The second rule to match. */
 
 			public:
+				/**
+				 * Constructor.
+				 * @param first the first rule to match
+				 * @param second the second rule to match
+				 */
 				concatenation(base_rule const &first, base_rule const &second) : first(first.clone()), second(second.clone()) {}
 
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new concatenation(*this));
 				}
 		};

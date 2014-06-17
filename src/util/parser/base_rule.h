@@ -64,7 +64,7 @@ namespace util {
 				/**
 				 * Contains the operations performed when a rule is tried on the current position.
 				 * The method first tries to apply the rule at the current position using the virtual
-				 * \ref test method. If there is a match, \ref the_match_range is set to represent the
+				 * \ref test method. If there is a match, the_match_range is set to represent the
 				 * range consumed by the rule and \ref the_semantic_action is called (if one has been
 				 * assigned to this rule).
 				 * @param context the range to be matched

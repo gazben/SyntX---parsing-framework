@@ -32,19 +32,35 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Matches a string literal of a formal language.
+		 * The delimiter character and the character used as an escape character
+		 * can be given.
+		 */
 		class string : public base_rule {
 			private:
 				char delimiter; /**< The string delimiter character. */
 				char escape_character; /**< The escape_character. */
 				
 			public:
+				/**
+				 * Constructor.
+				 * @param delimiter the delimiter character
+				 * @param escape_character the escape character
+				 */
 				string(char delimiter = '\"', char escape_character = '\\') :
 					delimiter(delimiter),
 					escape_character(escape_character) {}
 
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new string(*this));
 				}
 		};

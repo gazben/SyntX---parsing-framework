@@ -34,31 +34,72 @@
 using namespace util::parser;
 
 namespace applications {
+	/**
+	 * Example grammar demonstrating the use of the SyntX framework realizing a simple calculator.
+	 */
 	class calculator {
 		private:	
+			/**
+			 * Helper class for the processing the expressions using two stacks, one for the numbers and one for the operations. 
+			 */
 			struct evaluate {
+				/**
+				 * Exception thrown when a pop is performed on an empty stack.
+				 */
 				class empty_stack : public std::exception {
 					public:
-						~empty_stack() throw() {}
+						/**
+						 * Destructor.
+						 */
+						~empty_stack() noexcept {}
 
-						char const *what() const throw();
+						/**
+						 * Yields the error message of the exception.
+						 * @return the error message of the exception.
+						 */
+						char const *what() const noexcept;
 				};
 
-				std::stack<int> &numbers;
-				std::stack<char> &operations;
+				std::stack<int> &numbers;		/**< The reference of the stack containing the numbers. */
+				std::stack<char> &operations;	/**< The reference of the stack containing the operations. */
 
+				/**
+				 * Constructor.
+				 * @param numbers the stack containing the numbers
+				 * @param operations the stack containing the operations
+				 */
 				evaluate(std::stack<int> &numbers, std::stack<char> &operations) :
 					numbers(numbers), operations(operations) {}
 
+				/**
+				 * Function call operator performing the calculations.
+				 * This is needed as the \ref evaluate struct is used as an
+				 * action handler.
+				 */
 				void operator()(std::string const &);
 			};
 
-			rule sum, product, multiplicand, group;
-			std::stack<int> numbers;
-			std::stack<char> operations;
+			rule sum;						/**< Rule representing a sum. */
+			rule product;					/**< Rule representing a product. */
+			rule multiplicand;				/**< Rule representing a multiplicand. */
+			rule group;						/**< Rule representing a group. */
+			std::stack<int> numbers;		/**< The stack containing the numbers. */
+			std::stack<char> operations;	/**< The stack containing the operations. */
+
 
 		public:
+			/**
+			 * Constructor.
+			 * Defines and builds the grammar.
+			 */
 			calculator();
+
+			/**
+			 * Processes an expression and returns the result.
+			 * @param expression the expression to process
+			 * @param result reference of the variable to which the result is written
+			 * @return true if the expression was correct and could be processed
+			 */
 			bool calculate(std::string const &expression, int &result);
 	};
 }

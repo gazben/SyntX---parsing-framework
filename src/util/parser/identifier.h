@@ -32,15 +32,33 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Rule that matches identifiers of a formal language.
+		 * The rule will match a sequence of characters that doesn't contain
+		 * whitespace, starts with either a small or a capital letter or one element
+		 * of the set of extra characters given at construction and continues with
+		 * small or capital letters, numbers or elements of the set of extra characters.
+		 */
 		class identifier : public base_rule {
 			private:
-				std::string extra_characters;
+				std::string extra_characters; /**< The set of extra characters that may be consumed by this rule. */
 
 			public:
+				/**
+				 * Constructor.
+				 * @param extra_characters the set of extra characters that may be consumed by this rule
+				 */
 				identifier(std::string const &extra_characters = "_") : extra_characters(extra_characters) {}
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
+
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new identifier(*this));
 				}
 		};

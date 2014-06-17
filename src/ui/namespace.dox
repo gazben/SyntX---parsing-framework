@@ -1,0 +1,4 @@
+/**
+ * Contains the executables of the examples accompanying the parsing framework. 
+ */
+namespace ui {}

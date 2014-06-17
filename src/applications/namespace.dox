@@ -1,0 +1,4 @@
+/**
+ * Contains the examples accompanying the parsing framework.
+ */
+namespace applications {}

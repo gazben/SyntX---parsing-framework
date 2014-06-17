@@ -32,21 +32,39 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Rule that tries to match the given rule after having consumed every whitespace before the
+		 * rule except for the newline character.
+		 */
 		class whitespace_not_newline : public base_rule {
 			private:
-				std::shared_ptr<base_rule> a_rule;
-				static char whitespace_characters[];
+				std::shared_ptr<base_rule> a_rule;		/**< The rule to be matched after consuming the whitespaces. */
+				static char whitespace_characters[];	/**< The characters considered as whitespace (except for the newline character). */
 
 			public:
+				/**
+				 * Constructor.
+				 * @param a_rule rule to be matched after consuming the whitespaces
+				 */
 				whitespace_not_newline(base_rule const &a_rule) : a_rule(a_rule.clone()) {}
 
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new whitespace_not_newline(*this));
 				}
 
 			private:
+				/**
+				 * Determines whether the given character is a whitespace or not.
+				 * @param c the character to be examined
+				 */
 				bool is_whitespace_not_newline(char c);
 		};
 	}

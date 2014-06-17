@@ -32,25 +32,40 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Rule that matches an integer number.
+		 * Whether the number should be signed or unsigned can be chosen at
+		 * construction using \ref integer::type.
+		 */
 		class integer : public base_rule {
 			public:
 				/**
 				 * The type of the integer: signed or unsigned.
 				 */
-				enum integer_type {
+				enum class type {
 					signed_int, /**< The type that represents signed integers. */
 					unsigned_int /**< The type that represents unsigned integers. */
 				};
 
 			private:
-				integer_type the_integer_type; /**< The integer type. */
+				type the_integer_type; /**< The integer type. */
 
 			public:
-				integer(integer_type the_integer_type = signed_int) : the_integer_type(the_integer_type) {}
+				/**
+				 * Constructor.
+				 * @param the_integer_type the \ref type of the integer (signed or unsigned)
+				 */
+				integer(type the_integer_type = type::signed_int) : the_integer_type(the_integer_type) {}
 
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new integer(*this));
 				}
 		};

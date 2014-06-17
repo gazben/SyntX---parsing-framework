@@ -32,16 +32,34 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Rule that matches a single character.
+		 * The set of characters that can be consumed by this rule can be given at construction.
+		 */
 		class character : public base_rule {
 			private:
-				std::string allowed_characters;
+				std::string allowed_characters; /**< The set of characters that may be consumed by this rule (but only one at a time). */
 
 			public:
+				/**
+				 * Constructor.
+				 * @param allowed_characters the set of characters that may be
+				 * consumed by the rule.
+				 * @note The rule will only match one character even if there
+				 * are several characters in a sequence that are elements of
+				 * the set.
+				 */
 				character(std::string const &allowed_characters) : allowed_characters(allowed_characters) {}
 
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new character(*this));
 				}
 		};

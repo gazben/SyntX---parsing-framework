@@ -1,0 +1,61 @@
+/**
+\mainpage Introduction
+\section parser_sec The SyntX parsing framework
+
+SyntX is a parsing framework with which formal grammars can be defined in an
+EBNF-like manner using the classes and the overloaded operators of the
+framework. It is similar to Boost's <a
+href="http://boost-spirit.com/home/">Spirit</a>, but SyntX is run-time
+polymorphic.
+
+Examples of its use can be found under src/applications/. The source code has
+been documented using <a href="www.doxygen.org/">Doxygen</a>
+(docs/html/index.html) and an extra document (written using LaTeX) can be found
+under docs/tex.
+
+\section structure_sec The structure of the project
+In the project's root directory there are three script files and several
+directories.
+
+The project is compiled using th Project Construction Tool available for
+download on <a
+href="https://gitlab.com/nagygr/project-construction-tool">GitLab</a>. It can
+automatically find dependencies in C++ projects with a given structure and call
+the compiler accodingly. It was written in Python which has to be installed.
+
+A Makefile is provided for convenience. Compile the project by issuing
+\code make all \endcode 
+while
+\code make docs \endcode 
+generates the documentation and 
+\code make tarball \endcode 
+creates a gzipped TAR archive of the project with a time stamp incorporated in
+its name.
+
+The subdirectories of the project root are the following: bin, docs,
+obj, src, test_data: 
+	- the bin directory contains the binaries of the project including the test
+	  executables;
+	- every form of project documentation is found under the docs directory;
+	  The subdirectories of docs are handled by Doxygen;
+	- the obj directory contains the object files of the project;
+	- every source code can be found under src;
+
+The source code is organized in a way that reflects its structure. This is true
+both at code-level and at directory-level. For example, every utility class can
+be found in the subdirectories of the util directory. Similarly, every such
+class resides in the util namespace.
+
+The namespace structure exactly matches the directory structure of the project.
+This is also reflected in the include statements, as they are given with the
+src directory as a root. Thus, for example the util::parser::base_rule class
+can be found in the src/util/parser/ directory and its header file can be
+included this way: \code #include <util/parser/base_rule.h>\endcode This
+mechanism is very similar to the way packages are handled in Java.
+
+The subdirectory structure of the bin and obj directories is identical to that
+of the src directory. So the executable that runs the calculator example, which resides
+in the source file src/ui/calculator.cc can be found in the bin/ui/
+directory and its name is calculator.
+*/
+

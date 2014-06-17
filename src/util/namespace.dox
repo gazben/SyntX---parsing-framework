@@ -1,0 +1,5 @@
+/**
+ * Contains utility classes.
+ * E.g. the parsing and the testing framework.
+ */
+namespace util {}

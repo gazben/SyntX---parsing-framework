@@ -32,16 +32,31 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Rule that matches the given rule at least once.
+		 * The given rule has to match at least once but may
+		 * match an unlimited number of times.
+		 */
 		class repetition : public base_rule {
 			private:
-				std::shared_ptr<base_rule> repeated_rule;
+				std::shared_ptr<base_rule> repeated_rule; /**< The rule to be matched at least once. */
 
 			public:
+				/**
+				 * Constructor.
+				 * @param repeated_rule the rule to be matched at least once
+				 */
 				repetition(base_rule const &repeated_rule) : repeated_rule(repeated_rule.clone()) {}
 
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new repetition(*this));
 				}
 		};

@@ -33,35 +33,103 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * A subclass of \ref base_rule that is used as the type of user-defined composite rules.
+		 * This rule stores a double indirection to the composite rule. This is because the rule
+		 * might become part of other composites before beeing defined, so it has to contain something
+		 * that can be copied and doesn't change when the rule is defined. This thing is a pointer to a pointer
+		 * that is assigned the address of the actual rule at definition. The address of the inner pointer
+		 * doesn't change (only it contents) so it can be assigned to the outer pointer at contruction time and
+		 * can be copied an arbitrary number of times.
+		 */
 		class rule : public base_rule {
 			private:
-				std::shared_ptr< std::shared_ptr<base_rule> > the_rule;
+				std::shared_ptr< std::shared_ptr<base_rule> > the_rule; /**< The address of the pointer storing the address of the composite rule referred to by this object. */
 
 			public:	
+				/**
+				 * Constructor.
+				 * @param a_rule pointer to the composite rule referred to by this object
+				 */
 				rule(std::shared_ptr<base_rule> a_rule = std::shared_ptr<base_rule>()) : the_rule(new std::shared_ptr<base_rule>(a_rule)) {}
 
+				/**
+				 * Sets the address of the composite rule.
+				 * @param a_rule the address of the composite rule
+				 */
 				void set_rule(std::shared_ptr<base_rule> a_rule) {
 					*the_rule = a_rule;
 				}
 
+				/**
+				 * Gets the address of the composite rule.
+				 * @return a_rule the address of the composite rule
+				 */
 				std::shared_ptr<base_rule> get_rule() {return *the_rule;}
 
-				bool test(match_range &context, match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(match_range &context, match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new rule(*this));
 				}
 
+				/**
+				 * Assigns a \ref base_rule to the \ref rule.
+				 */
 				rule &operator <<=(base_rule const &rhs);
 		};
 
+		/**
+		 * Creates a \ref concatenation rule.
+		 * @param first the first rule to be matched
+		 * @param second the second rule to be matched
+		 */
 		rule operator <<(base_rule const &first, base_rule const &second);
+
+		/**
+		 * Creates a \ref alternation rule.
+		 * @param first the first alternative
+		 * @param second the second alternative
+		 */
 		rule operator |(base_rule const &first, base_rule const &second);
+
+		/**
+		 * Creates a \ref option rule.
+		 * @param optional_rule the optional rule
+		 */
 		rule operator !(base_rule const &optional_rule);
+
+		/**
+		 * Creates a \ref repetition rule.
+		 * @param repeated_rule the repeated rule
+		 */
 		rule operator +(base_rule const &repeated_rule);
+
+		/**
+		 * Creates a \ref repetition_or_epsilon rule.
+		 * @param repeated_rule the repeated rule
+		 */
 		rule operator *(base_rule const &repeated_rule);
+
+		/**
+		 * Creates a rule that is preceeded by whitespace consumption using the \ref whitespace rule.
+		 * @param a_rule the rule before which whitespaces are to be consumed
+		 * @note This means that every whitespace is consumed before the given rule.
+		 */
 		rule operator -(base_rule const &a_rule);
-		rule operator ~(base_rule const &a_rule); //whitespace - new_line
+
+		/**
+		 * Creates a rule that is preceeded by whitespace consumption using the \ref whitespace_not_newline rule.
+		 * @param a_rule the rule before which whitespaces are to be consumed
+		 * @note This means that every whitespace is consumed before the given rule except for the newline character.
+		 */
+		rule operator ~(base_rule const &a_rule);
 	}
 }
 

@@ -51,12 +51,12 @@ namespace util {
 				/**
 				 * @copydoc util::parser::base_rule::test
 				 */
-				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
 				/**
 				 * @copydoc util::parser::base_rule::clone
 				 */
-				virtual std::shared_ptr<base_rule> clone() const {
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new alternation(*this));
 				}
 		};

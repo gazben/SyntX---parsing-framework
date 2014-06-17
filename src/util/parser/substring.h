@@ -32,16 +32,33 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Rule that tries to match the given word from the current position.
+		 * This rule will match even if the given word is in the middle of a word, so
+		 * it matches a substring of a word.
+		 * @note This rule has nothing to do with a string literal -- those are matched
+		 * by \ref string.
+		 */
 		class substring : public base_rule {
 			private:
-				std::string the_word;
+				std::string the_word; /**< The string to be matched. */
 
 			public:
+				/**
+				 * Constructor.
+				 * @param the_word the string to be matched
+				 */
 				substring(std::string const &the_word) : the_word(the_word) {}
 
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new substring(*this));
 				}
 		};

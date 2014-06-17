@@ -32,16 +32,30 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Rule that matches a given rule an unlimited number of times
+		 * and returns true any way.
+		 */
 		class repetition_or_epsilon : public base_rule {
 			private:
-				std::shared_ptr<base_rule> repeated_rule;
+				std::shared_ptr<base_rule> repeated_rule; /**< Rule to be matched zero or more times. */
 
 			public:
+				/**
+				 * Constructor.
+				 * @param repeated_rule rule to be matched zero or more times
+				 */
 				repetition_or_epsilon(base_rule const &repeated_rule) : repeated_rule(repeated_rule.clone()) {}
 
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new repetition_or_epsilon(*this));
 				}
 		};

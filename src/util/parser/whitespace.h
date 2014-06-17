@@ -32,16 +32,30 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Rule that tries to match the given rule after having consumed every whitespace before the
+		 * rule.
+		 */
 		class whitespace : public base_rule {
 			private:
-				std::shared_ptr<base_rule> a_rule;
+				std::shared_ptr<base_rule> a_rule; /**< The rule to be matched after consuming the whitespaces. */
 
 			public:
+				/**
+				 * Constructor.
+				 * @param a_rule rule to be matched after consuming the whitespaces
+				 */
 				whitespace(base_rule const &a_rule) : a_rule(a_rule.clone()) {}
 
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new whitespace(*this));
 				}
 		};

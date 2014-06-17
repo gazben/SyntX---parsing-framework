@@ -27,7 +27,7 @@
 #include <applications/calculator.h>
 
 namespace applications {
-	char const *calculator::evaluate::empty_stack::what() const throw() {
+	char const *calculator::evaluate::empty_stack::what() const noexcept {
 		return "The stack is empty.";
 	}
 

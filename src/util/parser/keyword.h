@@ -32,19 +32,38 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Rule that matches a given keyword.
+		 * It tries to match the given keyword and then it looks at
+		 * the subsequent character which has to be one that is not allowed in
+		 * keywords (not a letter, a number or part of the given extra character set).
+		 * The reason for acting this way is that otherwise the rule would match any
+		 * word starting with the given keyword.
+		 */
 		class keyword : public base_rule {
 			private:
-				std::string the_word;
-				std::string extra_characters;
+				std::string the_word;			/**< The keyword to match. */
+				std::string extra_characters;	/**< The set of extra characters allowed in the keyword. */
 
 			public:
+				/**
+				 * Constructor.
+				 * @param the_word the keyword to match
+				 * @param extra_characters the set of extra characters that are allowed in the keyword
+				 */
 				keyword(std::string const &the_word, std::string const &extra_characters = "_") : 
 					the_word(the_word),
 					extra_characters(extra_characters) {}
 
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new keyword(*this));
 				}
 		};

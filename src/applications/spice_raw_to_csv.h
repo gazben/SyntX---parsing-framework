@@ -31,34 +31,47 @@
 #include <util/parser/parser.h>
 
 namespace applications {
+	/**
+	 * Example grammar demonstrating the use of the SyntX framework realizing a converter from the Spice Raw format to CSV (comma seperated values).
+	 */
 	class spice_raw_to_csv {
 		private:
-			util::parser::rule title;
-			util::parser::rule date;
-			util::parser::rule plotname;
-			util::parser::rule flags;
-			util::parser::rule variable_no;
-			util::parser::rule points;
-			util::parser::rule variables; 
-			util::parser::rule variable_definition;
-			util::parser::rule values;
-			util::parser::rule value_item;
-			util::parser::rule sentence;
+			util::parser::rule title;						/**< Rule that represents a title. */
+			util::parser::rule date;						/**< Rule that represents a date. */
+			util::parser::rule plotname;					/**< Rule that represents a plotname. */
+			util::parser::rule flags;						/**< Rule that represents flags. */
+			util::parser::rule variable_no;					/**< Rule that represents a variable number expression. */
+			util::parser::rule points;						/**< Rule that represents points. */
+			util::parser::rule variables;					/**< Rule that represents a variable list. */
+			util::parser::rule variable_definition;			/**< Rule that represents variable definition. */
+			util::parser::rule values;						/**< Rule that represents values. */
+			util::parser::rule value_item;					/**< Rule that represents a value item. */
+			util::parser::rule sentence;					/**< Rule that represents the entire Spice Raw file. */
 
-			std::vector<std::string> the_variable_names;
-			std::vector< std::vector<double> > the_values;
+			std::vector<std::string> the_variable_names;	/**< Container holding the variable names. */
+			std::vector< std::vector<double> > the_values;	/**< Container hoolding the values. */
 
-			size_t number_of_variables;
-			size_t number_of_points;
-			size_t index;
-			std::string name, type;
-			double a_value; 
-
-			char delimiter;
+			size_t number_of_variables;						/**< The number of variables. */
+			size_t number_of_points;						/**< The number of points. */
+			size_t index;									/**< The index. */
+			std::string name;								/**< The name of the plot. */
+			std::string type;								/**< The type of the plot. */
+			double a_value;									/**< A value. */
+			char delimiter;									/**< Delimiter to be used in the CSV file. */
 
 		public:
+			/** 
+		  	 * Constructor.
+			 * @param delimiter the delimiter to be used in the CSV file
+			 * Defines and builds the grammar.
+			 */
 			spice_raw_to_csv(char delimiter);
 
+			/**
+			 * Parses a file and processes the Spice Raw plot inside.
+			 * @param filename the name of the file to be processed
+			 * @return true if the file was correct and could be processed
+			 */
 			bool parse(std::string const &filename);
 	};
 }

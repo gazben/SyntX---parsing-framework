@@ -30,13 +30,32 @@
 #include <util/parser/parser.h>
 
 namespace applications {
+	/**
+	 * Example grammar demonstrating the use of the SyntX framework showing how an infinite look-ahead can be realized by the framework.
+	 */
 	class lookahead {
 		private:
-			util::parser::rule for_loop, range_for, iterator_for, declaration, logic_expression, expression;
+			util::parser::rule for_loop;			/**< Rule the represents a for loop of any type. */
+			util::parser::rule range_for;			/**< Rule the represents a range-based for loop. */
+			util::parser::rule iterator_for;		/**< Rule the represents an iterator for loop. */
+			util::parser::rule declaration;			/**< Rule the represents a declaration. */
+			util::parser::rule logic_expression;	/**< Rule the represents a logic expression. */
+			util::parser::rule expression;			/**< Rule the represents an expression. */
+
 
 		public:
+			/**
+			 * Constructor.
+			 * Defines and builds the grammar.
+			 */
 			lookahead();
 
+			/**
+			 * Tests a piece of C++ code and determines whether it contains an iterator or a range-based for loop.
+			 * @param text the text to process
+			 * @param result reference of the variable to which the result is written
+			 * @return true if the text was correct and could be processed
+			 */
 			bool test(std::string const &text, std::string &result);
 	};
 }

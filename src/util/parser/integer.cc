@@ -37,7 +37,7 @@ namespace util {
 			character neg_sign("-"), pos_sign("+"), zero("0");
 			bool has_sign = false;
 
-			if (the_integer_type == signed_int) has_sign = neg_sign.match(local_context, a_range);
+			if (the_integer_type == type::signed_int) has_sign = neg_sign.match(local_context, a_range);
 			if (!has_sign) pos_sign.match(local_context, a_range);
 
 			if (zero.match(local_context, a_range)) {

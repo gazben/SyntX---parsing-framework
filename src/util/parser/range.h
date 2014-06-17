@@ -34,13 +34,22 @@
 
 namespace util {
 	namespace parser {
+		/**
+		 * Rule that matches one character of a given range.
+		 */
 		class range : public base_rule {
 			private:
-				char range_first;
-				char range_last;
+				char range_first;	/**< The lower endpoint of the range. */
+				char range_last;	/**< The upper endpoint of the range. */
 
 			public:
-				range(char range_first, char range_last) throw (std::invalid_argument) :
+				/**
+				 * Constructor.
+				 * @param range_first the lower endpoint of the range
+				 * @param range_last the upper endpoint of the range
+				 * @throw std::invalid_argument
+				 */
+				range(char range_first, char range_last) :
 					range_first(range_first),
 					range_last(range_last) {
 						if (range_first > range_last) {
@@ -50,9 +59,15 @@ namespace util {
 						}
 				}
 
-				bool test(base_rule::match_range &context, base_rule::match_range &the_match_range);
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override;
 
-				virtual std::shared_ptr<base_rule> clone() const {
+				/**
+				 * @copydoc util::parser::base_rule::clone
+				 */
+				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new range(*this));
 				}
 		};
