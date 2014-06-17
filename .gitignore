@@ -1,6 +1,11 @@
 .*
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
 bin/
 obj/
-docs/
+docs/html
 !/.gitignore
 
