@@ -27,7 +27,10 @@
 \usepackage[pdfborder={0 0 0}]{hyperref}
 \usepackage{setspace}
 \usepackage[T1]{fontenc}
-\usepackage[lighttt]{lmodern}	%needed to have bold teletype (to have bold keywords in lstlisting)
+%\usepackage[lighttt]{lmodern}	%needed to have bold teletype (to have bold keywords in lstlisting)
+%\usepackage{pxfonts}
+%\usepackage{bold-extra}
+%\usepackage[lighttt]{lmodern}
 \usepackage{hfoldsty}			%has to go after \usepackage{lmodern} to take effect
 \usepackage{listings}
 
@@ -39,6 +42,7 @@
 \fancyhf[FC]{\scriptsize{\textit{\textbf{\thepage}}}}
 \fancyhf[FR]{\scriptsize{\textit{\today}}}
 
+\renewcommand{\ttdefault}{pcr}
 %\lstset{basicstyle=\scriptsize\ttfamily, keywordstyle=\bfseries\ttfamily}
 \lstset{basicstyle=\scriptsize\ttfamily, stringstyle=\itshape\ttfamily,
 keywordstyle=\bfseries\ttfamily,aboveskip=10pt,
@@ -77,7 +81,7 @@ used to express context-free grammars. It is the extension of the Backus-Naur Fo
 EBNF styles exist. This document uses the one defined by W3C\footnote{World Wide Web Consortium --
 \href{http://www.w3.org}{www.w3.org}}.
 
-The "Hello World" grammar that is used to introduce parsing describes a mathemtical expression containg
+The "Hello World" grammar that is used to introduce parsing describes a mathematical expression containg
 numbers, the four basic operations and an arbitrary depth of parentheses. The grammar below is even simpler
 than that, it allows only addition, so the way precedence can be handled is not shown. It allows an infinite
 depth of grouping using parentheses however. The ease with which recursive structures can be handled by
@@ -93,19 +97,19 @@ expression = '(' addition ')'
 	\end{minipage}
 \end{center}
 
-The production rule named \texttt{addition} is the \emph{start rule}. The text that we're trying to analyse
+The production rule named \texttt{addition} is the \emph{start rule}. The text that we're trying to analyze
 should conform to this rule as a whole. The details can be investigated by following the references to other
 rules.
 
 The \texttt{addition} rule states that an addition is made up of an addend that can be followed by an
-arbitrary number of addends each preceded by a '+' operator. The \texttt{*} operator in EBNF allows an zero or
+arbitrary number of addends each preceded by a '+' operator. The \texttt{*} operator in EBNF allows zero or
 more occurence of a rule (or a sequence of rules). This means that an addition may consist of a single addend
 as well, which is OK: a number can be thought of as a mathematical expression.
 
-If we wanted to have at least two addends seperated by a '+' operator, than EBNF's \texttt{+} should be used,
-which allows one or more occurences.
+If we wanted to have at least two addends seperated by a '+' operator, than EBNF's operator \texttt{+} should
+be used, which allows one or more occurences.
 
-An addend in our simple grammar can be either a single digit (given here by a the shorthand used to describe
+An addend in our simple grammar can be either a single digit (given here by the shorthand used to describe
 character sequences in EBNF) or an expression. The \texttt{|} operator stands for \emph{alternation}.
 
 The interesting part lays in the \texttt{expression} rule. An expression is an addition enclosed by
@@ -123,12 +127,12 @@ Let's see some examples! The simplest possible expression is a single digit:
 \end{center}
 
 The start rule is where the matching starts, so we assume that the our text is an \texttt{addition}. An addition starts
-with an \texttt{addend}. An \texttt{addend} can be a digit, so indeed the text starts with an addend. Thus the
+with an \texttt{addend}. An \texttt{addend} can be a digit so the text indeed starts with an addend. Thus the
 first part of the \texttt{addition} rule matched, we may move on to the rest of the text. Next we're looking
-for a '+' character which we don't find. Luckiliy this part of the rule is optional, so we get to the end of
+for a '+' character which we don't find. Luckily this part of the rule is optional, so we get to the end of
 the rule having matched the entire text. This is a successful match.
 
-Let's go for something a bit more complex next:
+Let's go for something more complex next:
 
 \begin{center}
 	\begin{minipage}[h]{0.2\textwidth}
@@ -147,7 +151,7 @@ are also allowed.
 So next we're trying to match the \texttt{expression} rule which contains an \texttt{addition} between
 parentheses. That's exactly what we have here so, again, we have a successful match. Please note that the
 \texttt{addition} inside the \texttt{expression} can again turn into an \texttt{expression} and then into an
-\texttt{addition} -- this is exactly how the arbitrary depth of the expression is analysed.
+\texttt{addition} -- this is exactly how the arbitrary depth of the expression is analyzed.
 
 \subsection*{Functions corresponding to each production rule}
 In a recursive descent parser there is a function corresponding to every production rule. These functions
@@ -183,7 +187,7 @@ bool character(match_range &context, std::string const &characters) {
 
 The \texttt{match\_range} type is an \texttt{std::pair} that holds two \texttt{std::string::iterator}s. It
 describes the context of the parsing: the first element points to the current position (the character that
-should be analysed next), the second to the end of the text.
+should be analyzed next), the second to the end of the text.
 
 \begin{center}
 	\begin{minipage}[h]{0.8\textwidth}
@@ -194,7 +198,7 @@ using match_range = std::pair< std::string::iterator,
 	\end{minipage}
 \end{center}
 
-The function has two arguments, the context and the character set that enumerates the characters that are
+The function has two arguments, the context and the character set that contains the characters that are
 accepted. The context is taken as a non-constant reference because the function sets the current position
 after the the last character it could match.
 
@@ -203,7 +207,7 @@ complex parser function can delve deep into a string before finding out that it 
 might also call a series of other parsing functions on the way that also alter this value, so it is absolutely
 necessary to keep a copy of the original position and only change that value when there is a successful match.
 
-Every parser function that operates at the character level should constantly check if the end of the text has
+Every parser function that operates at the character level should always check whether the end of the text has
 been reached. This can be seen in line~4.
 
 As long as a function finds characters it can consume, it advances the current position, i.e. the first
@@ -214,6 +218,57 @@ the context taken by reference has to be changed to reflect the advancement in t
 has to return true (lines~9-10). Otherwise it has to merely return false (line~14), the context is left
 unchanged.
 
+\subsection*{Recursive descent}
+The example above showed a simple a parsing function working at the character level. It doesn't call any other
+function, instead it decides on its own whether the text at the given position matches it or not. This is
+because that rule describes a so called \emph{terminal symbol}, one that corresponds to a symbol actually
+appearing in the text, in this case, a letter.
+
+Other rules might define symbols that contain other symbols and define a structure that these symbols should
+have in order to comply to the rule. The composite symbols are called \emph{non-terminal symbols}.
+
+In RDPs non-terminal symbols can be parsed using functions that call other parsing functions just as any rule
+can be referenced in the definition of an EBNF rule.
+
+Let's see an example for such a function: the \texttt{expression} rule in the simple grammar seen earlier.
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+bool expression(match_range &context) {
+	match_range local = context;
+
+	if  (
+		character(local, "(") &&
+		addition(local) && 
+		character(local, ")")
+	) {
+		context.first = local.first;
+		return true;
+	}
+
+	return false;
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+It is interesting to notice that as this function doesn't operate at the character level (every character
+consumed by the rule are processed by one of the functions called by it), it doesn't need to check for the end
+of the text -- it has to be done by the low-level functions.
+
+The sequence of the sub-rules is realized by the \texttt{\&\&} operator of the C++ language. Short-circuit
+evaluation is exploited here: if the first rule doesn't match and thus returns \texttt{false} then the second
+is not called and the entire expression will get a \texttt{false} value.
+
+Furthermore the order of evaluation is fixed too and goes from the left to the right. So \texttt{addition}
+will receive an updated \texttt{local} -- the value that was altered by the first call to \texttt{character}.
+
+So when all three functions return \texttt{true}, the body of the \texttt{if} clause is evaluated and
+\texttt{context} receives a value updated by all three functions and now pointing to the next position of the
+text to be parsed.
+
+%	if (character(local, "(") && addition(local) && character(local, ")")) {
 %\vfill
 %\begin{center}
 %\footnote\emph{Please consider the environment before printing this document.}
