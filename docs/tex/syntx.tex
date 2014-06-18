@@ -27,10 +27,7 @@
 \usepackage[pdfborder={0 0 0}]{hyperref}
 \usepackage{setspace}
 \usepackage[T1]{fontenc}
-%\usepackage[lighttt]{lmodern}	%needed to have bold teletype (to have bold keywords in lstlisting)
-%\usepackage{pxfonts}
-%\usepackage{bold-extra}
-%\usepackage[lighttt]{lmodern}
+\usepackage[lighttt]{lmodern}	%needed to have bold teletype (to have bold keywords in lstlisting)
 \usepackage{hfoldsty}			%has to go after \usepackage{lmodern} to take effect
 \usepackage{listings}
 
@@ -42,9 +39,8 @@
 \fancyhf[FC]{\scriptsize{\textit{\textbf{\thepage}}}}
 \fancyhf[FR]{\scriptsize{\textit{\today}}}
 
-\renewcommand{\ttdefault}{pcr}
 %\lstset{basicstyle=\scriptsize\ttfamily, keywordstyle=\bfseries\ttfamily}
-\lstset{basicstyle=\scriptsize\ttfamily, stringstyle=\itshape\ttfamily,
+\lstset{basicstyle=\scriptsize\ttfamily, stringstyle=\ttfamily,
 keywordstyle=\bfseries\ttfamily,aboveskip=10pt,
 belowskip=10pt, tabsize=2, xleftmargin=5pt, captionpos=b, 
 literate={á}{{\'a}}1 {é}{{\'e}}1 {ó}{{\'o}}1 {ö}{{\"o}}1 {ú}{{\'u}}1 {ü}{{\"u}}1}
@@ -239,9 +235,7 @@ bool expression(match_range &context) {
 	match_range local = context;
 
 	if  (
-		character(local, "(") &&
-		addition(local) && 
-		character(local, ")")
+		character(local, "(") && addition(local) && character(local, ")")
 	) {
 		context.first = local.first;
 		return true;
@@ -253,8 +247,8 @@ bool expression(match_range &context) {
 	\end{minipage}
 \end{center}
 
-It is interesting to notice that as this function doesn't operate at the character level (every character
-consumed by the rule are processed by one of the functions called by it), it doesn't need to check for the end
+It is interesting to note that as this function doesn't operate at the character level (every character
+consumed by the rule is processed by one of the functions called by it), it doesn't need to check for the end
 of the text -- it has to be done by the low-level functions.
 
 The sequence of the sub-rules is realized by the \texttt{\&\&} operator of the C++ language. Short-circuit
@@ -264,11 +258,44 @@ is not called and the entire expression will get a \texttt{false} value.
 Furthermore the order of evaluation is fixed too and goes from the left to the right. So \texttt{addition}
 will receive an updated \texttt{local} -- the value that was altered by the first call to \texttt{character}.
 
-So when all three functions return \texttt{true}, the body of the \texttt{if} clause is evaluated and
+So when all three functions return \texttt{true}, the body of the \texttt{if} statement is evaluated and
 \texttt{context} receives a value updated by all three functions and now pointing to the next position of the
 text to be parsed.
 
-%	if (character(local, "(") && addition(local) && character(local, ")")) {
+Alternatives can be realized using the \texttt{||} operator where short-circuit evaluation comes handy again
+as the second function gets called only if the first failed to match (in which case the first doesn't alter
+the context which is also important).
+
+Please note that composite logical expression should not be constructed as they can lead to mispositioned
+iterators. Let's investigate the following code fragment:
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+if (
+	(rule1(local) && rule2(local)) || rule3(local)
+) {
+	...
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+Let's assume that \texttt{rule1} matches but \texttt{rule2} doesn't, so \texttt{rule3} gets a chance. The
+problem is that \texttt{rule1} moves the position that \texttt{local} points to. Unfortunately it doesn't get
+corrected before \texttt{local} is fed to \texttt{rule3} so \texttt{rule3} will try to match from a different
+position then the one where \texttt{rule1} started from and this is not what we intended to do.
+
+If the above expression is realized in two seperate functions, one containing the sequence (AND logic) and the
+other containing the option (OR logic) then this situation doesn't occur as the functions will only alter the
+context if they match. This is done automatically in the SyntX framework but it is something the programmer
+has to pay attention to if the parser is handwritten.
+
+\subsection*{Actions during parsing}
+All the example functions shown up to here did was to tell whether their input complied to their requirements
+or not. If the task of the parser is merely to determine if a text conform to a specific grammar then this is
+sufficient.
+
 %\vfill
 %\begin{center}
 %\footnote\emph{Please consider the environment before printing this document.}
