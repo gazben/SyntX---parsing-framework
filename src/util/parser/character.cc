@@ -30,10 +30,9 @@ namespace util {
 			if (context.first == context.second) return false;
 
 			base_rule::match_range local_context = context;
-			std::string::const_iterator allowed_character = allowed_characters.begin();
 
-			for (; allowed_character != allowed_characters.end(); ++allowed_character) {
-				if (*local_context.first == *allowed_character) {
+			for (auto allowed_character: allowed_characters) {
+				if (*local_context.first == allowed_character) {
 					++local_context.first;
 
 					the_match_range.first = context.first;

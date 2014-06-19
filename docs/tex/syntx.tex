@@ -35,7 +35,7 @@
 \fancyhf{}
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
-\fancyhf[FL]{\scriptsize{\textit{The SyntX Parser Library}}}
+\fancyhf[FL]{\scriptsize{\textit{The SyntX Parser Library (Gergely Nagy)}}}
 \fancyhf[FC]{\scriptsize{\textit{\textbf{\thepage}}}}
 \fancyhf[FR]{\scriptsize{\textit{\today}}}
 
@@ -87,7 +87,7 @@ depth of grouping using parentheses however. The ease with which recursive struc
 EBNF grammars and RDPs is a very important feature and is often exploited.
 
 \begin{center}
-	\begin{minipage}[h]{0.5\textwidth}
+	\begin{minipage}[h]{0.5\textwidth}\label{lst:hellogrammar}
 		\begin{lstlisting}[breaklines=true]
 addition = addend ('+' addend)*
 addend = [0-9] | expression
@@ -163,7 +163,7 @@ serving as a character set taken as an argument. The structure of this function 
 rule methods in the SyntX library.
 
 \begin{center}
-	\begin{minipage}[h]{0.8\textwidth}
+	\begin{minipage}[h]{0.8\textwidth}\label{lst:globalcharacter}
 		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
 bool character(match_range &context, std::string const &characters) {
   match_range local = context;
@@ -323,9 +323,9 @@ complex = rule1 rule2 rule3
 	\end{minipage}
 \end{center}
 
-then we can not be sure that the entire expression will match until \texttt{rule3} returns \texttt{true} but
-we need to extract the results on a rule-basis, otherwise we get the matched range of the three rules packed
-in one string needing yet another extraction.
+then we can not be sure that the entire expression will match until \texttt{rule3} returns \texttt{true}. The
+problem is that we need to extract the results on a rule-basis, otherwise we get the matched range of the
+three rules packed in one string needing yet another extraction.
 
 A solution to this problem can be to store the results of the three rules in temporary variables and build the
 complex data only when all three matched successfully.
@@ -408,8 +408,401 @@ The \texttt{base\_rule} class has a virtual funtion called \texttt{clone} the pu
 entire class hierarchy clonable. More on this can be found on page \pageref{subsec:rule}.
 
 \usubsec{Example of a rule subclassed from \texttt{base\_rule}}{character}
-\usubsec{Realizing EBNF operators}{ebdfoperators}
+Let's look at a simple example of how an actual rule can be created using the \texttt{base\_rule} class. It is
+the realization of the previously discussed character rule (page \pageref{lst:globalcharacter}) in the SyntX
+framework.
+
+As the \texttt{test} function to be overridden has a fixed argument list, the set of allowed characters is given in
+the constructor and stored as a data member. Only two functions need to be written: \texttt{clone} -- which is
+basically a oneliner that dynamically creates a copy of the rule and \texttt{test}.
+
+The code of \texttt{test} resembles closely to the \texttt{character} function on page
+\pageref{lst:globalcharacter}.
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+bool character::test(base_rule::match_range &context, match_range &the_match_range) {
+	if (context.first == context.second) return false;
+
+	base_rule::match_range local_context = context;
+
+	for (auto allowed_character: allowed_characters) {
+		if (*local_context.first == allowed_character) {
+			++local_context.first;
+
+			the_match_range.first = context.first;
+			the_match_range.second = local_context.first;
+			context = local_context;
+			return true;
+		}
+	}
+
+	return false;
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+The same operations are performed as seen earlier. First the function checks whether the current parsing
+position is at the end of the input or not. If the end has been reached there is nothing to do but return
+\texttt{false}. This operation has to be done in every rule that operates at the character level.
+
+If there is input to process a local copy of the context is created. This is not necessary in this case, this
+code rather shows the generic way of writing a rule.
+
+Then it iterates over the set of allowed characters and if any of them matches the current reading position
+then the context is adjusted, the match range is set and \texttt{true} is returned.
+
+The goal of this example was to show how easy it is to complement the framework with a new rule. In fact the
+need to create new rules should arise very rarely as the framework contains a great number of simple classes
+with which almost every task can be solved.
+
+\usubsec{Realizing EBNF operators}{ebnfoperators}
+Next we look at the realization of EBNF operators (sequence, alternation, etc.) as subclasses of
+\texttt{base\_rule}. Naturally, these classes are never instantiated manually -- it would make the grammars
+unreadable. There are operators that do this so that the grammars defined in SyntX will look very much like
+their EBNF counterparts.
+
+Our example is alternation which will try to match one of the two rules given to it. It will first try the
+first one and then the second if the first fails. This means that the first rule will have a precedence over
+the second and this should be kept in mind when constructing the grammar\footnote{This can be important when
+the input matched by one of the rules is the starting substring of the one matched by the other. In such a
+case, if the shorter rule comes first, it will match and the second will never be run. There could be a special
+alternation rule which chooses the longer of the two matches, but SyntX doesn't provide such a rule -- it is easy to
+write though.}.
+
+The \texttt{alternation} class stores the \texttt{shared\_ptr}s of two rules and overrides \texttt{clone} and
+\texttt{test}. Let's analyze the latter:
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+bool alternation::test(base_rule::match_range &context, base_rule::match_range &the_match_range) {
+	base_rule::match_range first_range, second_range;
+	base_rule::match_range local_context = context;
+
+	if (first->match(local_context, first_range)) {
+		the_match_range.first = first_range.first;
+		the_match_range.second = first_range.second;
+		context = local_context;
+
+		return true;
+	}
+	
+	local_context = context;
+
+	if (second->match(local_context, second_range)) {
+		the_match_range.first = second_range.first;
+		the_match_range.second = second_range.second;
+		context = local_context;
+
+		return true;
+	}
+	
+	return false;
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+The function first tries to match the first rule. If it succeeds, \texttt{the\_match\_range} and
+\texttt{context} is adjusted and \texttt{true} is returned.
+
+If the first rule didn't match, then the local copy of the context is set to the original value and the second
+rule is given a chance. Theoretically the \texttt{local\_context} should not be altered by the first rule if
+it doesn't match, so line~13 is unnecessary -- it is there to make sure that no mistake is made even if the
+rule does not conform entirely to the expectations.
+
 \usubsec{The \texttt{rule} class}{rule}
+The operators that make the grammars EBNF-like also make the framework a bit complicated. Let's first consider
+a single rule that contains only built-in rules such as the one in the following example (which doesn't follow
+the correct syntax of the framework to ease the understanding):
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[breaklines=true]
+binary_digit = (character("0") | character("1")) character("b")
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+In order to avoid memory leaks and to make grammars easier to write and read, the rules are not created
+dinamically. This means that unnamed, temporary local variables are created on the right side of the
+expression above (as e.g. \texttt{character("0")} is the constructor of the class \texttt{character}).
+
+This means that \texttt{operator |}, which creates an \texttt{alternation}, receives two temporary objects as
+arguments. As it needs to accept any kind of \texttt{base\_rule}s, it can not take them as value, so the only
+choice is to take them as constant reference. This OK, as long as it doesn't want to store these values, as
+the reference of temporaries should not be stored.
+
+The problem is that every operator will indeed want to store the rules that are given to them -- as we have
+seen that earlier on page \pageref{subsec:ebnfoperators}. This is because the evaluation of these expressions
+happens long after their construction, so actually some kind of a syntax tree is built automatically, which is
+traversed during the parsing process. Thus, the \texttt{test} method of the temporary rules is called long
+after they get deleted.
+
+The solution to this problem is to create copies of these rules. As it has been shown, not much is stored in
+these rules (a few pointers and maybe short strings), so copying them is a relatively cheap operation.
+
+The copies have to be made inside the operator functions that take the constant reference of the temporaries.
+The problem here is that all they know of these rules is that they are subclasses of \texttt{base\_rule}.
+Virtual constructors would come handy in this situation if they existed. Instead we need the \texttt{clone}
+function, a typical solution used in heterogeneous containers in several languages. This is why
+\texttt{base\_rule} defines the \texttt{clone} function as pure virtual -- it makes every subclass override
+it, so that the framework can rely on its existence in every rule object.
+
+And indeed, what e.g. \texttt{alternation} does in its constructor is that it instantly makes copies of the
+two rules it received using their \texttt{clone} function: 
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true]
+alternation::alternation(
+	base_rule const &first,
+	base_rule const &second
+) : 
+	first(first.clone()),
+	second(second.clone()) {}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+And all that \texttt{operator|} does is create an instance of \texttt{alternation} and return it in a
+\texttt{rule}:
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true]
+rule operator |(base_rule const &first, base_rule const &second) {
+	return rule(
+		std::shared_ptr<base_rule>(new alternation(first, second))
+	);
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+We will soon get to why this is needed and what the class \texttt{rule} is used for.
+
+If there were no rules that refer to other composite rules then we could stop here and there would be no need
+for the \texttt{rule} class. We could build expressions of arbitrary complexity and get a
+\texttt{shared\_ptr<base\_rule>} as a result, which contains dynamic copies of other rules that also contain
+dynamic copies of rules in a tree structure that reflect the structure of the grammar.
+
+Luckily, thanks to the smart pointers provided by C++11's STL, there is no need to free this tree manually,
+though it would not be a very complicated task.
+
+As a grammar grows, it becomes inevitable to introduce intermediate rules to avoid the need to write one very
+complex rule that could overflow with repetitions of the same expression. These rules are also called the
+non-terminals of a grammar, while the built-in rules of the framework can be thought of as the terminal
+symbols.
+
+Let's consider the following grammar (our introductory grammar repeated):
+
+\begin{center}
+	\begin{minipage}[h]{0.5\textwidth}\label{lst:numberedexpressiongrammar}
+		\begin{lstlisting}[breaklines=true, numbers=left]
+addition = addend ('+' addend)*
+addend = [0-9] | expression
+expression = '(' addition ')'
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+As you can see, each of the rules here contain references of other rules. None of them consists of merely
+terminals. Actually this is because this is a recursive grammar describing a structure that can be arbitrarily
+deep but the statement that a large proportion of the rules in every grammar contains references to other
+rules is true nevertheless.
+
+The problem arises already in line~1: the alternation operator will try take the copy of \texttt{addend},
+a rule that has not been defined yet! Of course it exists, a previous line has to contain the following
+declaration:
+
+\begin{center}
+	\begin{minipage}[h]{0.5\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true]
+rule addend;
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+but it is a completely empty rule until it is defined in line~2. This means that the copy that is stored by
+the instance of \texttt{alternation} and eventually the rule \texttt{addition} is not the final value of the
+\texttt{addend} rule!
+
+The same is true for the rules \texttt{addend} and \texttt{expression}.
+
+The Fundamental Theorem of Software
+Engineering\footnote{\href{http://en.wikipedia.org/wiki/Fundamental_theorem_of_software_engineering}{en.wikipedia.org/wiki/Fundamental\_theorem\_of\_software\_engineering}}
+attributed to David J. Wheeler\footnote{
+\href{http://en.wikipedia.org/wiki/David_Wheeler_(computer_scientist)}{en.wikipedia.org/wiki/David\_Wheeler\_(computer\_scientist)}}
+says, that "All problems in computer science can be solved by another level of indirection." A statement
+that might have been meant partly as a joke, it is absolutely true for the above problem. 
+
+What we need, is a representation of a composite rule that doesn't change when it is filled with contents so
+that a copy of its empty state is exactly identical to its final value after its definition has been
+processed. It might sound unrealizable at first, but actually all we need is a pointer to a pointer (i.e.
+another level of indirection). 
+
+The class \texttt{rule} is a subclass of \texttt{base\_rule} that stores a \texttt{shared\_ptr} to a
+\texttt{shared\_ptr} of a \texttt{base\_rule}.
+
+When a \texttt{rule} is constructed, it dynamically creates a default \texttt{shared\_ptr} (a
+\texttt{nullptr}) and stores it in its pointer-to-a-pointer data member called \texttt{the\_rule}. The address
+of the dynamic pointer will never change in the lifespan of the variable, only the contents of the inner
+pointer will do: it will be overwritten with the address of the cloned rule assigned to the rule.
+
+So we have realized a class that does not change when it is filled with contents and a copy of which is valid
+no matter when it is created -- before or after the construction of the contents. All it takes is a pointer to
+a pointer.
+
+Now the grammar on page \pageref{lst:numberedexpressiongrammar} doesn't cause any problems: the composite
+rules referred to in the definition of a rule shall be stored as \texttt{rule}s. But how can an operator
+decide which rule is a terminal and which is a non-terminal? Well it doesn't have to: every operator will
+create \texttt{rule}s and it simply solves the problem. This might seem wasteful as constructing a rule
+implies the dynamic allocaton of a \texttt{shared\_ptr}. Considering the fact though that every rule is copied many
+times and that the copy constructor of a \texttt{rule} is trivial, as the only data member it has is a
+\texttt{shared\_ptr}, this method is feasible.
+
+Thus class \texttt{rule} is basically a wrapper class introducing the needed extra level of indirection. It
+follows that its methods basically delegate the tasks to the rule that's address is stored. E.g. the
+\texttt{test} method looks like this:
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true]
+bool rule::test(match_range &context, match_range &the_match_range) {
+	if (!(*the_rule)) return false;
+	return (*the_rule)->match(context, the_match_range);
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+Undefined rules return \texttt{false}, other rules return what the rule inside returns.
+
+\vspace{0.8em}
+One might ask why the name of the \texttt{rule} class is so short and one that doesn't reflect its purpose.
+The reason for this is that this is the class that is instantiated by the user of the framework who doesn't
+need to understand the mechanisms behind the scene. For someone who merely creates grammars using the
+framework these variables represent rules of a grammar and nothing more, so their type name should exactly be
+\texttt{rule}. This way the code is short, easy to understand and reflects how the writer of code understands
+it, which is more important than what the creator of the framework sees.
+
+This is why the base class of the rule hierarchy was called \texttt{base\_rule} and not simply \texttt{rule}.
+
+\usubsec{The operators of the framework}{operators}
+The header that contains the definition of class \texttt{rule} also hosts a number of global operators, the
+ones that represent the EBNF operators in the framework. Although these are global operator by nature, they
+create \texttt{rule} objects so they really belong to the class even if the language has no way to express
+this relationship. This is why they were placed here.
+
+Unfortunately EBNF operators can not all be realized in C++ as only the C++ operators are available for
+overloading. The ones closest to EBNF were chosen.
+
+The rule of thumb that one should only overload an operator if it operates "as ints do" does not apply here,
+in my opinion, as this is an entirely different context where operators have a different meaning, one that is
+known to everyone familiar with the field. Thus, I used operators quite freely and did not hesitate when I
+assigned an operator a function that didn't even resemble the operation that it performs on ints.
+
+Another problem is that there is no operator in EBNF for concatenation. If the name of two rules are written
+after eachother then it means that the first has to follow the second. This is something that can not be done
+in C++, there has to be an operator between every two operands. This is an example for an operator that was
+defined randomly. In this case the shift left operator was used (\verb!<<!) as it is already used for a
+similar purpose in STL. For the sake of consistency, the operator \verb!<<=! was used as the assignment
+operator.
+
+The following table summarizes the operators of the SyntX framework.
+
+\begin{table}[h]
+	\begin{center}
+		\begin{tabular}{cp{22em}}
+			\textbf{Operator} & \textbf{Meaning} \\
+			\hline\\
+			\vspace{0.3em}
+			\verb!|! & alternation\\
+			\verb+!+ & option\\
+			\verb!+! & repetition\\
+			\verb!*! & repetition of zero or more time\\
+			\verb!-!\textit{rule} & consume whitespaces before \textit{rule}\\
+			\verb!~!\textit{rule} & consume whitespaces except new line before \textit{rule} \\
+			\verb!<<! & concatenation\\
+			\verb!<<=! & assignment to a rule\\
+		\end{tabular}
+	\end{center}
+\end{table}
+
+\usubsec{The built-in rules (terminal symbols)}{terminals}
+There are a great number of built-in rules defining the terminal symbols in the framework. Most ordinary
+parsing tasks can be solved using these rules making it unnecessary to write custom rules (although this is
+something that can easily be done and actually extension of the framework is highly recommended should the
+need arise).
+
+The following table summarizes the built-in rules (terminal symbols) in the framework.
+
+\begin{table}[h]
+	\begin{center}
+		\begin{tabular}{cp{22em}}
+			\textbf{Built-in rule} & \textbf{Consumes} \\
+			\hline\\
+			\vspace{0.3em}
+			\texttt{character} & one character if it is in a given set\\
+			\texttt{eol} & the end-of-line character\\
+			\texttt{epsilon} & nothing (and always matches)\\
+			\texttt{identifier} & a string that can be an identifier\\
+			\texttt{integer} & an integer (signed or unsigned)\\
+			\texttt{keyword} & the given keyword\\
+			\texttt{range} & one character in the given range\\
+			\texttt{real} & a real number\\
+			\texttt{string} & a string literal with a given delimiter and escape character \\
+			\texttt{substring} & a given word even as a substring\\
+		\end{tabular}
+	\end{center}
+\end{table}
+
+The \texttt{epsilon} rule which does not consume anything but always returns \texttt{true} might seem useless.
+As the consumption of white spaces can only by realized with prefix operators (\verb!~! and \verb!-!), there
+always has to be a rule after them. When the white spaces at the end of the input are to be consumed,
+\texttt{epsilon} comes into picture. This can be necessary if one wants to test whether the match was a full
+match, i.e. the entire input matched the grammar and not just a part of it.
+
+An interesting result of the C++ operator overloading is that the postfix EBNF operators \verb!*!, \verb!+! and
+\verb!?! become prefix operators and \verb+!+ has to be used instead of \verb!?!.
+
+\usubsec{An example}{example}
+Finally the introductory grammar on page \pageref{lst:hellogrammar} is given here in SyntX to show how the operators and built-in rules can be
+used. Please refer to the Doxygen documentation and the source code for more examples.
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+rule addition, addend, expression;
+
+addition		<<= addend << *(character("+") << addend);
+addend			<<= range('0', '9') | expression;
+expression	<<= character("(") << addition << character(")");
+
+std::string input = "2+(3+4)";
+match_range context(input.begin(), input.end());
+match_range result;
+
+if (expression.match(context, result))
+	std::cout << "Matched: " << std::string(result.first, result.second);
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+\vfill
+\vfill
+\vfill
+\hfill\begin{minipage}[h]{0.3\textwidth}
+\begin{center}
+	\textit{Gergely Nagy}\\
+	\textit{Budapest, \today}
+\end{center}
+\end{minipage}
+\vfill
 
 \newpage \tableofcontents
 
