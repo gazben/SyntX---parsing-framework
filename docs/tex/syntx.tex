@@ -45,6 +45,9 @@ keywordstyle=\bfseries\ttfamily,aboveskip=10pt,
 belowskip=10pt, tabsize=2, xleftmargin=5pt, captionpos=b, 
 literate={á}{{\'a}}1 {é}{{\'e}}1 {ó}{{\'o}}1 {ö}{{\"o}}1 {ú}{{\'u}}1 {ü}{{\"u}}1}
 
+\newcommand{\usec}[2]{\section*{#1}\label{sec:#2}\addcontentsline{toc}{section}{#1}}
+\newcommand{\usubsec}[2]{\subsection*{#1}\label{subsec:#2}\addcontentsline{toc}{subsection}{#1}}
+
 \begin{document}
 \sloppy
 
@@ -63,14 +66,14 @@ literate={á}{{\'a}}1 {é}{{\'e}}1 {ó}{{\'o}}1 {ö}{{\"o}}1 {ú}{{\'u}}1 {ü}{{
 
 \vspace{4.5em}
 
-\section*{Recursive descent parsing}
+\usec{Recursive descent parsing}{rdp}
 The SyntX library is based upon the theory of recursive descent parsers (RDPs). In order to gain a deep and confident
 understanding of the library, one has to be familiar with the rudiments of recursive descent parsing.
 
 This section provides a brief introduction with a very simple example. It also introduces some of the types
 and notations that are used in the source code of the library as well.
 
-\subsection*{The Extended Backus-Naur Form}
+\usubsec{The Extended Backus-Naur Form}{ebnf}
 EBNF\footnote{Extended Backus-Naur Form --
 \href{http://en.wikipedia.org/wiki/Ebnf}{en.wikipedia.org/wiki/Ebnf}} is a widespread notation that can be
 used to express context-free grammars. It is the extension of the Backus-Naur Form (BNF) and actually several
@@ -149,7 +152,7 @@ parentheses. That's exactly what we have here so, again, we have a successful ma
 \texttt{addition} inside the \texttt{expression} can again turn into an \texttt{expression} and then into an
 \texttt{addition} -- this is exactly how the arbitrary depth of the expression is analyzed.
 
-\subsection*{Functions corresponding to each production rule}
+\usubsec{Functions corresponding to each production rule}{parsingfun}
 In a recursive descent parser there is a function corresponding to every production rule. These functions
 receive the context of parsing (i.e. the text to be parsed and the current position) and return a Boolean
 value which is true if the function could match a certain substring of the text and could move the position
@@ -186,10 +189,10 @@ describes the context of the parsing: the first element points to the current po
 should be analyzed next), the second to the end of the text.
 
 \begin{center}
-	\begin{minipage}[h]{0.8\textwidth}
+	\begin{minipage}[h]{0.8\textwidth}\label{lst:matchrange}
 		\begin{lstlisting}[language=C++, breaklines=true]
-using match_range = std::pair< std::string::iterator,
-                               std::string::iterator >;
+using match_range = std::pair< std::string::const_iterator,
+                               std::string::const_iterator >;
 		\end{lstlisting}
 	\end{minipage}
 \end{center}
@@ -214,7 +217,7 @@ the context taken by reference has to be changed to reflect the advancement in t
 has to return true (lines~9-10). Otherwise it has to merely return false (line~14), the context is left
 unchanged.
 
-\subsection*{Recursive descent}
+\usubsec{Recursive descent}{recdesc}
 The example above showed a simple a parsing function working at the character level. It doesn't call any other
 function, instead it decides on its own whether the text at the given position matches it or not. This is
 because that rule describes a so called \emph{terminal symbol}, one that corresponds to a symbol actually
@@ -291,14 +294,129 @@ other containing the option (OR logic) then this situation doesn't occur as the 
 context if they match. This is done automatically in the SyntX framework but it is something the programmer
 has to pay attention to if the parser is handwritten.
 
-\subsection*{Actions during parsing}
+\usubsec{Actions during parsing}{actions}
 All the example functions shown up to here did was to tell whether their input complied to their requirements
-or not. If the task of the parser is merely to determine if a text conform to a specific grammar then this is
-sufficient.
+or not. If the task of the parser is merely to determine if a text conforms to a specific grammar then this is
+sufficient. Otherwise the functions should perform operations to yield a result of the parsing. This can be in
+the form of an AST (abstract syntax tree) or pratically any data that can be generated based on the input.
 
-%\vfill
-%\begin{center}
-%\footnote\emph{Please consider the environment before printing this document.}
-%\end{center}
-%\vfill
+When the parsing functions are handwritten the actions to be performed when a match is found can be put inside
+the parsing function resulting in a code where parsing and data processing is intertwined. For simple problems
+this is a perfect solution and is easy to handle.
+
+When problems become more complex this method becomes tiresome or even impracticable: there are cases where
+data processing can not be performed at the time of parsing as additional knowledge is needed that can only be
+extracted later, possibly after the parsing of the entire input is finished.
+
+In the SyntX framework an \texttt{std::function} (which can wrap a plain function, a method, a function object
+or a lambda) can be assigned to any rule -- these are called \emph{action}s. The function receives the matched
+range as a \texttt{std::string} and can do whatever is needed when the given rule is successfully matched.
+
+There is just one problem with this approach: if a complex data is defined by a sequence of rules such as in
+this case
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[breaklines=true]
+complex = rule1 rule2 rule3
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+then we can not be sure that the entire expression will match until \texttt{rule3} returns \texttt{true} but
+we need to extract the results on a rule-basis, otherwise we get the matched range of the three rules packed
+in one string needing yet another extraction.
+
+A solution to this problem can be to store the results of the three rules in temporary variables and build the
+complex data only when all three matched successfully.
+
+In SyntX actions are added to rules using \texttt{operator[]} and they can be assigned to a group of rules as
+well:
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[breaklines=true]
+complex = ( rule1[action1] rule2[action2] rule3[action3] )[action4]
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+Please note that this is not exactly the correct syntax -- it is only shown for demonstration purposes here.
+
+\usec{The SyntX framework}{syntx}
+In the next few sections the framework's structure and the basics of its operation are explaing briefly. For
+the details please refer to the Doxygen documentation, which can be generated from the source code with the
+help of the Makefile provided with the project (\texttt{make docs}).
+
+\usubsec{The \texttt{base\_rule} class}{baserule}
+The base class of every rule is \texttt{base\_rule}. It defines two data types used throughout the framework,
+contains the semantic action assigned to a rule and performs the basic administrative tasks concering the
+matching process. The exact instructions regarding the matching have to go in a virtual function defined as
+pure virtual in this class (\texttt{test}).
+
+One of the data types define in \texttt{base\_rule} has already been mentioned on page
+\pageref{lst:matchrange}, it is the \texttt{match\_range} which is used for two purposes: it defines the
+limits between which the parsing is done and also the range matched by a given rule.
+
+The other type is \texttt{semantic\_action} discussed earlier on page \pageref{subsec:actions}:
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true]
+using semantic_action = std::function<void(std::string const &)>;
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+One action can be assigned to a rule and it's stored in the \texttt{the\_semantic\_action} data member of the
+class.
+
+The \texttt{match} method handles the tasks associated with matching.
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+bool base_rule::match(match_range &context, match_range &the_match_range) {
+	match_range a_range;
+
+	if (test(context, a_range)) {
+		the_match_range.first = a_range.first;
+		the_match_range.second = a_range.second;
+
+		if (the_semantic_action) {
+			std::string the_matched_substring(the_match_range.first, the_match_range.second);
+			the_semantic_action(the_matched_substring);
+		}
+
+		return true;
+	}
+	else return false;
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+The \texttt{match} method calls the virtual \texttt{test} to find out whether the text conforms to the rule at
+the current position. If it doesn't, the method simply returns \texttt{false}, while in the case of a
+successful match, the matched range is stored in the local variable \texttt{a\_range}. This value is delegated
+to \texttt{the\_match\_range}, which is a reference of a variable taken as an argument.
+
+If a semantic action has been assigned to the rule, it is called and the result of the matching process is
+given to it as a \texttt{std::string}.
+
+The \texttt{base\_rule} class has a virtual funtion called \texttt{clone} the purpose of which is to make the
+entire class hierarchy clonable. More on this can be found on page \pageref{subsec:rule}.
+
+\usubsec{Example of a rule subclassed from \texttt{base\_rule}}{character}
+\usubsec{Realizing EBNF operators}{ebdfoperators}
+\usubsec{The \texttt{rule} class}{rule}
+
+\newpage \tableofcontents
+
+\vfill
+\vfill
+\begin{center}
+\footnotesize\emph{Please consider the environment before printing this document.}
+\end{center}
+\vfill
 \end{document}

@@ -4,6 +4,7 @@
 *.fls
 *.log
 *.out
+*.toc
 bin/
 obj/
 docs/html
