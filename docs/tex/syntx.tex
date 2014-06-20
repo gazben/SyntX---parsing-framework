@@ -58,9 +58,9 @@ literate={á}{{\'a}}1 {é}{{\'e}}1 {ó}{{\'o}}1 {ö}{{\"o}}1 {ú}{{\'u}}1 {ü}{{
 \begin{center}
 	\begin{minipage}[h]{0.85\linewidth}
 		\itshape
-		The SyntX parser library is a set of C++ classes that enables users to create a parser for an
-		LL(k) grammar by giving the production rules with an EBNF-like notation as C++ expressions. There is
-		thus no need for a precompiler, the parser can be an integral part of a C++ project.
+		The SyntX parser library is a set of C++ classes that enables users to create a parser for an LL(k)
+		grammar by giving the production rules with an EBNF-like notation in the form of C++ expressions.
+		There is thus no need for a precompiler, the parser can be an integral part of a C++ project.
 	\end{minipage}
 \end{center}
 
@@ -76,15 +76,15 @@ and notations that are used in the source code of the library as well.
 \usubsec{The Extended Backus-Naur Form}{ebnf}
 EBNF\footnote{Extended Backus-Naur Form --
 \href{http://en.wikipedia.org/wiki/Ebnf}{en.wikipedia.org/wiki/Ebnf}} is a widespread notation that can be
-used to express context-free grammars. It is the extension of the Backus-Naur Form (BNF) and actually several
-EBNF styles exist. This document uses the one defined by W3C\footnote{World Wide Web Consortium --
+used to express context-free grammars. It is the extension of the Backus-Naur Form (BNF). Actually several
+EBNF styles exist -- this document uses the one defined by W3C\footnote{World Wide Web Consortium --
 \href{http://www.w3.org}{www.w3.org}}.
 
-The "Hello World" grammar that is used to introduce parsing describes a mathematical expression containg
-numbers, the four basic operations and an arbitrary depth of parentheses. The grammar below is even simpler
-than that, it allows only addition, so the way precedence can be handled is not shown. It allows an infinite
-depth of grouping using parentheses however. The ease with which recursive structures can be handled by
-EBNF grammars and RDPs is a very important feature and is often exploited.
+The "Hello World" grammar that is generally used to introduce parsing describes a mathematical expression
+containg numbers, the four basic operations and an arbitrary depth of parentheses. The grammar below is even
+simpler than that, it allows only addition, so the way precedence can be handled is not shown. It allows an
+infinite depth of grouping using parentheses however. The ease with which recursive structures can be handled
+by EBNF grammars and RDPs is a very important feature and is often exploited.
 
 \begin{center}
 	\begin{minipage}[h]{0.5\textwidth}\label{lst:hellogrammar}
@@ -184,7 +184,7 @@ bool character(match_range &context, std::string const &characters) {
 	\end{minipage}
 \end{center}
 
-The \texttt{match\_range} type is an \texttt{std::pair} that holds two \texttt{std::string::iterator}s. It
+The \texttt{match\_range} type is an \texttt{std::pair} that holds two \texttt{string::const\_iterator}s. It
 describes the context of the parsing: the first element points to the current position (the character that
 should be analyzed next), the second to the end of the text.
 
@@ -218,7 +218,7 @@ has to return true (lines~9-10). Otherwise it has to merely return false (line~1
 unchanged.
 
 \usubsec{Recursive descent}{recdesc}
-The example above showed a simple a parsing function working at the character level. It doesn't call any other
+The example above shows a simple parsing function working at the character level. It doesn't call any other
 function, instead it decides on its own whether the text at the given position matches it or not. This is
 because that rule describes a so called \emph{terminal symbol}, one that corresponds to a symbol actually
 appearing in the text, in this case, a letter.
@@ -308,7 +308,7 @@ When problems become more complex this method becomes tiresome or even impractic
 data processing can not be performed at the time of parsing as additional knowledge is needed that can only be
 extracted later, possibly after the parsing of the entire input is finished.
 
-In the SyntX framework an \texttt{std::function} (which can wrap a plain function, a method, a function object
+In the SyntX framework a \texttt{std::function} (which can wrap a plain function, a method, a function object
 or a lambda) can be assigned to any rule -- these are called \emph{action}s. The function receives the matched
 range as a \texttt{std::string} and can do whatever is needed when the given rule is successfully matched.
 
@@ -341,16 +341,19 @@ complex = ( rule1[action1] rule2[action2] rule3[action3] )[action4]
 	\end{minipage}
 \end{center}
 
+Actions~1-3 should place the results of the matches in temporary variables and action~4 should construct the
+complex data.
+
 Please note that this is not exactly the correct syntax -- it is only shown for demonstration purposes here.
 
 \usec{The SyntX framework}{syntx}
-In the next few sections the framework's structure and the basics of its operation are explaing briefly. For
+In the next few subsections the framework's structure and the basics of its operation are explained briefly. For
 the details please refer to the Doxygen documentation, which can be generated from the source code with the
 help of the Makefile provided with the project (\texttt{make docs}).
 
 \usubsec{The \texttt{base\_rule} class}{baserule}
 The base class of every rule is \texttt{base\_rule}. It defines two data types used throughout the framework,
-contains the semantic action assigned to a rule and performs the basic administrative tasks concering the
+contains the semantic action assigned to a rule and performs the basic administrative tasks concerning the
 matching process. The exact instructions regarding the matching have to go in a virtual function defined as
 pure virtual in this class (\texttt{test}).
 
@@ -380,8 +383,7 @@ bool base_rule::match(match_range &context, match_range &the_match_range) {
 	match_range a_range;
 
 	if (test(context, a_range)) {
-		the_match_range.first = a_range.first;
-		the_match_range.second = a_range.second;
+		the_match_range = a_range;
 
 		if (the_semantic_action) {
 			std::string the_matched_substring(the_match_range.first, the_match_range.second);
@@ -416,7 +418,7 @@ As the \texttt{test} function to be overridden has a fixed argument list, the se
 the constructor and stored as a data member. Only two functions need to be written: \texttt{clone} -- which is
 basically a oneliner that dynamically creates a copy of the rule and \texttt{test}.
 
-The code of \texttt{test} resembles closely to the \texttt{character} function on page
+The code of \texttt{test} resembles closely the \texttt{character} function on page
 \pageref{lst:globalcharacter}.
 
 \begin{center}
@@ -448,13 +450,13 @@ The same operations are performed as seen earlier. First the function checks whe
 position is at the end of the input or not. If the end has been reached there is nothing to do but return
 \texttt{false}. This operation has to be done in every rule that operates at the character level.
 
-If there is input to process a local copy of the context is created. This is not necessary in this case, this
-code rather shows the generic way of writing a rule.
+If there is input to process a local copy of the context is created. This is not necessary in this case, in
+fact this code shows the generic and recommended way of writing a rule.
 
-Then it iterates over the set of allowed characters and if any of them matches the current reading position
-then the context is adjusted, the match range is set and \texttt{true} is returned.
+Then it iterates over the set of allowed characters and if any of them matches the one at the current reading
+position then the context is adjusted, the match range is set and \texttt{true} is returned.
 
-The goal of this example was to show how easy it is to complement the framework with a new rule. In fact the
+The goal of this example was to show how easy it is to extend the framework with a new rule. In fact the
 need to create new rules should arise very rarely as the framework contains a great number of simple classes
 with which almost every task can be solved.
 
@@ -483,8 +485,7 @@ bool alternation::test(base_rule::match_range &context, base_rule::match_range &
 	base_rule::match_range local_context = context;
 
 	if (first->match(local_context, first_range)) {
-		the_match_range.first = first_range.first;
-		the_match_range.second = first_range.second;
+		the_match_range = first_range;
 		context = local_context;
 
 		return true;
@@ -493,8 +494,7 @@ bool alternation::test(base_rule::match_range &context, base_rule::match_range &
 	local_context = context;
 
 	if (second->match(local_context, second_range)) {
-		the_match_range.first = second_range.first;
-		the_match_range.second = second_range.second;
+		the_match_range = second_range;
 		context = local_context;
 
 		return true;
@@ -511,8 +511,8 @@ The function first tries to match the first rule. If it succeeds, \texttt{the\_m
 
 If the first rule didn't match, then the local copy of the context is set to the original value and the second
 rule is given a chance. Theoretically the \texttt{local\_context} should not be altered by the first rule if
-it doesn't match, so line~13 is unnecessary -- it is there to make sure that no mistake is made even if the
-rule does not conform entirely to the expectations.
+it doesn't match, so line~12 is unnecessary -- it is there to make sure that no mistake is made even if the
+first rule does not conform entirely to the expectations.
 
 \usubsec{The \texttt{rule} class}{rule}
 The operators that make the grammars EBNF-like also make the framework a bit complicated. Let's first consider
@@ -532,8 +532,8 @@ dinamically. This means that unnamed, temporary local variables are created on t
 expression above (as e.g. \texttt{character("0")} is the constructor of the class \texttt{character}).
 
 This means that \texttt{operator |}, which creates an \texttt{alternation}, receives two temporary objects as
-arguments. As it needs to accept any kind of \texttt{base\_rule}s, it can not take them as value, so the only
-choice is to take them as constant reference. This OK, as long as it doesn't want to store these values, as
+arguments. As it needs to accept any kind of \texttt{base\_rule}s, it can not take them by value, so the only
+choice is to take them as constant reference. This is OK, as long as it doesn't want to store these values, as
 the reference of temporaries should not be stored.
 
 The problem is that every operator will indeed want to store the rules that are given to them -- as we have
@@ -583,15 +583,14 @@ rule operator |(base_rule const &first, base_rule const &second) {
 	\end{minipage}
 \end{center}
 
-We will soon get to why this is needed and what the class \texttt{rule} is used for.
+We will soon get to why this is needed and what the purpose of class \texttt{rule} is.
 
 If there were no rules that refer to other composite rules then we could stop here and there would be no need
 for the \texttt{rule} class. We could build expressions of arbitrary complexity and get a
-\texttt{shared\_ptr<base\_rule>} as a result, which contains dynamic copies of other rules that also contain
-dynamic copies of rules in a tree structure that reflect the structure of the grammar.
-
-Luckily, thanks to the smart pointers provided by C++11's STL, there is no need to free this tree manually,
-though it would not be a very complicated task.
+\texttt{shared\_ptr<base\_rule>} as a result, which contains dynamic copies of other rules that also
+contain dynamic copies of rules in a tree structure that reflect the structure of the
+grammar\footnote{Luckily, thanks to the smart pointers provided by C++11's STL, there is no need to free
+this tree manually, though it would not be a very complicated task.}.
 
 As a grammar grows, it becomes inevitable to introduce intermediate rules to avoid the need to write one very
 complex rule that could overflow with repetitions of the same expression. These rules are also called the
@@ -611,7 +610,7 @@ expression = '(' addition ')'
 \end{center}
 
 As you can see, each of the rules here contain references of other rules. None of them consists of merely
-terminals. Actually this is because this is a recursive grammar describing a structure that can be arbitrarily
+terminals. Actually this is because it is a recursive grammar describing a structure that can be arbitrarily
 deep but the statement that a large proportion of the rules in every grammar contains references to other
 rules is true nevertheless.
 
@@ -638,7 +637,7 @@ Engineering\footnote{\href{http://en.wikipedia.org/wiki/Fundamental_theorem_of_s
 attributed to David J. Wheeler\footnote{
 \href{http://en.wikipedia.org/wiki/David_Wheeler_(computer_scientist)}{en.wikipedia.org/wiki/David\_Wheeler\_(computer\_scientist)}}
 says, that "All problems in computer science can be solved by another level of indirection." A statement
-that might have been meant partly as a joke, it is absolutely true for the above problem. 
+that might have been meant partly as a joke, is the solution for our problem here. 
 
 What we need, is a representation of a composite rule that doesn't change when it is filled with contents so
 that a copy of its empty state is exactly identical to its final value after its definition has been
@@ -650,8 +649,8 @@ The class \texttt{rule} is a subclass of \texttt{base\_rule} that stores a \text
 
 When a \texttt{rule} is constructed, it dynamically creates a default \texttt{shared\_ptr} (a
 \texttt{nullptr}) and stores it in its pointer-to-a-pointer data member called \texttt{the\_rule}. The address
-of the dynamic pointer will never change in the lifespan of the variable, only the contents of the inner
-pointer will do: it will be overwritten with the address of the cloned rule assigned to the rule.
+of the dynamic pointer will never change in the lifespan of the variable, only its value will: it will be
+overwritten with the address of the cloned rule assigned to the \texttt{rule} object.
 
 So we have realized a class that does not change when it is filled with contents and a copy of which is valid
 no matter when it is created -- before or after the construction of the contents. All it takes is a pointer to
@@ -659,11 +658,11 @@ a pointer.
 
 Now the grammar on page \pageref{lst:numberedexpressiongrammar} doesn't cause any problems: the composite
 rules referred to in the definition of a rule shall be stored as \texttt{rule}s. But how can an operator
-decide which rule is a terminal and which is a non-terminal? Well it doesn't have to: every operator will
-create \texttt{rule}s and it simply solves the problem. This might seem wasteful as constructing a rule
-implies the dynamic allocaton of a \texttt{shared\_ptr}. Considering the fact though that every rule is copied many
-times and that the copy constructor of a \texttt{rule} is trivial, as the only data member it has is a
-\texttt{shared\_ptr}, this method is feasible.
+decide which rule is terminal and which is non-terminal? Well it doesn't have to: every operator will create
+\texttt{rule} objects and it simply solves the problem. This might seem wasteful as constructing a
+\texttt{rule} implies the dynamic allocaton of a \texttt{shared\_ptr}. Considering the fact though that every
+rule is copied many times and that the copy constructor of a \texttt{rule} is trivial, as the only data member
+it has is a \texttt{shared\_ptr}, this method is feasible.
 
 Thus class \texttt{rule} is basically a wrapper class introducing the needed extra level of indirection. It
 follows that its methods basically delegate the tasks to the rule that's address is stored. E.g. the
@@ -694,20 +693,21 @@ This is why the base class of the rule hierarchy was called \texttt{base\_rule} 
 
 \usubsec{The operators of the framework}{operators}
 The header that contains the definition of class \texttt{rule} also hosts a number of global operators, the
-ones that represent the EBNF operators in the framework. Although these are global operator by nature, they
+ones that represent the EBNF operators in the framework. Although these are global operators by nature, they
 create \texttt{rule} objects so they really belong to the class even if the language has no way to express
 this relationship. This is why they were placed here.
 
 Unfortunately EBNF operators can not all be realized in C++ as only the C++ operators are available for
 overloading. The ones closest to EBNF were chosen.
 
-The rule of thumb that one should only overload an operator if it operates "as ints do" does not apply here,
-in my opinion, as this is an entirely different context where operators have a different meaning, one that is
-known to everyone familiar with the field. Thus, I used operators quite freely and did not hesitate when I
-assigned an operator a function that didn't even resemble the operation that it performs on ints.
+The rule of thumb that one should only overload an operator if it performs the same operation as on ints does
+not apply here, in my opinion, as this is an entirely different context where operators have a different
+meaning, one that is known to everyone familiar with the field. Thus, I used operators quite freely and did
+not hesitate when I assigned an operator a function that didn't even resemble the operation that it performs
+on ints.
 
 Another problem is that there is no operator in EBNF for concatenation. If the name of two rules are written
-after eachother then it means that the first has to follow the second. This is something that can not be done
+after one another then it means that the first has to follow the second. This is something that can not be done
 in C++, there has to be an operator between every two operands. This is an example for an operator that was
 defined randomly. In this case the shift left operator was used (\verb!<<!) as it is already used for a
 similar purpose in STL. For the sake of consistency, the operator \verb!<<=! was used as the assignment
@@ -733,8 +733,11 @@ The following table summarizes the operators of the SyntX framework.
 	\end{center}
 \end{table}
 
+An interesting result of the C++ operator overloading is that the postfix EBNF operators \verb!*!, \verb!+! and
+\verb!?! become prefix operators and \verb+!+ has to be used instead of \verb!?!.
+
 \usubsec{The built-in rules (terminal symbols)}{terminals}
-There are a great number of built-in rules defining the terminal symbols in the framework. Most ordinary
+There is a great number of built-in rules defining terminal symbols in the framework. Most ordinary
 parsing tasks can be solved using these rules making it unnecessary to write custom rules (although this is
 something that can easily be done and actually extension of the framework is highly recommended should the
 need arise).
@@ -767,9 +770,6 @@ always has to be a rule after them. When the white spaces at the end of the inpu
 \texttt{epsilon} comes into picture. This can be necessary if one wants to test whether the match was a full
 match, i.e. the entire input matched the grammar and not just a part of it.
 
-An interesting result of the C++ operator overloading is that the postfix EBNF operators \verb!*!, \verb!+! and
-\verb!?! become prefix operators and \verb+!+ has to be used instead of \verb!?!.
-
 \usubsec{An example}{example}
 Finally the introductory grammar on page \pageref{lst:hellogrammar} is given here in SyntX to show how the operators and built-in rules can be
 used. Please refer to the Doxygen documentation and the source code for more examples.
@@ -784,11 +784,13 @@ addend			<<= range('0', '9') | expression;
 expression	<<= character("(") << addition << character(")");
 
 std::string input = "2+(3+4)";
-match_range context(input.begin(), input.end());
-match_range result;
+base_rule::match_range context(input.cbegin(), input.cend());
+base_rule::match_range result;
 
-if (expression.match(context, result))
+if (addition.match(context, result))
 	std::cout << "Matched: " << std::string(result.first, result.second);
+else
+	std::cout << "Didn't match";
 		\end{lstlisting}
 	\end{minipage}
 \end{center}

@@ -22,3 +22,26 @@
  * THE SOFTWARE.
  */
 
+#include <string>
+#include <iostream>
+
+#include <util/parser/parser.h>
+
+using namespace util::parser;
+
+int main() {
+	rule addition, addend, expression;
+
+	addition <<= addend << *(character("+") << addend);
+	addend <<= range('0', '9') | expression;
+	expression <<= character("(") << addition << character(")");
+
+	std::string input = "2+(3+4)";
+	base_rule::match_range context(input.cbegin(), input.cend());
+	base_rule::match_range result;
+
+	if (addition.match(context, result))
+		std::cout << "Matched: " << std::string(result.first, result.second) << std::endl;
+	else
+		std::cout << "Didn't match" << std::endl;
+}

@@ -34,8 +34,7 @@ namespace util {
 			match_range a_range;
 
 			if (test(context, a_range)) {
-				the_match_range.first = a_range.first;
-				the_match_range.second = a_range.second;
+				the_match_range = a_range;
 
 				if (the_semantic_action) {
 					std::string the_matched_substring(the_match_range.first, the_match_range.second);

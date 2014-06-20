@@ -31,8 +31,7 @@ namespace util {
 			base_rule::match_range local_context = context;
 
 			if (first->match(local_context, first_range)) {
-				the_match_range.first = first_range.first;
-				the_match_range.second = first_range.second;
+				the_match_range = first_range;
 				context = local_context;
 
 				return true;
@@ -41,8 +40,7 @@ namespace util {
 			local_context = context;
 
 			if (second->match(local_context, second_range)) {
-				the_match_range.first = second_range.first;
-				the_match_range.second = second_range.second;
+				the_match_range = second_range;
 				context = local_context;
 
 				return true;

@@ -31,8 +31,7 @@ namespace util {
 			base_rule::match_range local_context = context;
 
 			if (repeated_rule->match(local_context, range)) {
-				the_match_range.first = range.first;
-				the_match_range.second = range.second;
+				the_match_range = range;
 
 				while (repeated_rule->match(local_context, range)) {
 					the_match_range.second = range.second;

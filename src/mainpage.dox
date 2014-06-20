@@ -8,10 +8,9 @@ framework. It is similar to Boost's <a
 href="http://boost-spirit.com/home/">Spirit</a>, but SyntX is run-time
 polymorphic.
 
-Examples of its use can be found under src/applications/. The source code has
-been documented using <a href="www.doxygen.org/">Doxygen</a>
-(docs/html/index.html) and an extra document (written using LaTeX) can be found
-under docs/tex.
+Examples of its use can be found under src/applications/. The source code has been documented using <a
+href="www.doxygen.org/">Doxygen</a> (docs/html/index.html) and a document discussing the basics of parsing
+with SyntX (written using LaTeX) can be found under docs/tex.
 
 \section structure_sec The structure of the project
 In the project's root directory there are three script files and several
