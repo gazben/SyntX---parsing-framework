@@ -56,7 +56,7 @@ namespace util {
 						 * @return the error message of the exception
 						 */
 						virtual char const *what() const noexcept override {
-							return "A rule was left undefined -- no inner rule has been assigned to it.";
+							return "A rule was left undefined -- no inner rule was assigned to it.";
 						}
 				};
 
