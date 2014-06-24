@@ -58,6 +58,7 @@ namespace util {
 				 * @param the_match_range the beginning and end of the matched range -- this variable
 				 * is only altered if there is a match
 				 * @return true if there is a match
+				 * @note This method may throw an exception (\ref rule::test throws \ref rule::undefined_rule).
 				 */
 				virtual bool test(match_range &context, match_range &the_match_range) = 0;
 

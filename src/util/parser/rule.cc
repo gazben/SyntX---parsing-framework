@@ -34,7 +34,7 @@
 namespace util {
 	namespace parser {
 		bool rule::test(match_range &context, match_range &the_match_range) {
-			if (!(*the_rule)) return false;
+			if (!(*the_rule)) throw undefined_rule();
 			return (*the_rule)->match(context, the_match_range);
 		}
 

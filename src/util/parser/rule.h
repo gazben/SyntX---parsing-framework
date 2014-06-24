@@ -28,6 +28,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <exception>
 
 #include <util/parser/base_rule.h>
 
@@ -43,6 +44,22 @@ namespace util {
 		 * can be copied an arbitrary number of times.
 		 */
 		class rule : public base_rule {
+			public:
+				/**
+				 * Exception thrown when a rule's inner rule is not initialized and the \ref base_rule::match
+				 * function is called.
+				 */
+				class undefined_rule : public std::exception {
+					public:
+						/**
+						 * Returns the error message of the exception.
+						 * @return the error message of the exception
+						 */
+						virtual char const *what() const noexcept override {
+							return "A rule was left undefined -- no inner rule has been assigned to it.";
+						}
+				};
+
 			private:
 				std::shared_ptr< std::shared_ptr<base_rule> > the_rule; /**< The address of the pointer storing the address of the composite rule referred to by this object. */
 

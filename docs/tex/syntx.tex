@@ -68,7 +68,7 @@ literate={á}{{\'a}}1 {é}{{\'e}}1 {ó}{{\'o}}1 {ö}{{\"o}}1 {ú}{{\'u}}1 {ü}{{
 
 \usec{Recursive descent parsing}{rdp}
 The SyntX library is based upon the theory of recursive descent parsers (RDPs). In order to gain a deep and confident
-understanding of the library, one has to be familiar with the rudiments of recursive descent parsing.
+understanding of the library, one has to be familiar with the fundamentals of recursive descent parsing.
 
 This section provides a brief introduction with a very simple example. It also introduces some of the types
 and notations that are used in the source code of the library as well.
@@ -102,8 +102,8 @@ rules.
 
 The \texttt{addition} rule states that an addition is made up of an addend that can be followed by an
 arbitrary number of addends each preceded by a '+' operator. The \texttt{*} operator in EBNF allows zero or
-more occurence of a rule (or a sequence of rules). This means that an addition may consist of a single addend
-as well, which is OK: a number can be thought of as a mathematical expression.
+more occurence of a match (or a sequence of matches). This means that an addition may consist of a single
+addend as well, which is OK: a number can be thought of as a mathematical expression.
 
 If we wanted to have at least two addends seperated by a '+' operator, than EBNF's operator \texttt{+} should
 be used, which allows one or more occurences.
@@ -111,7 +111,7 @@ be used, which allows one or more occurences.
 An addend in our simple grammar can be either a single digit (given here by the shorthand used to describe
 character sequences in EBNF) or an expression. The \texttt{|} operator stands for \emph{alternation}.
 
-The interesting part lays in the \texttt{expression} rule. An expression is an addition enclosed by
+The interesting part lies in the \texttt{expression} rule. An expression is an addition enclosed by
 parantheses. This is how the grammar becomes recursive and how an expression of infinite complexity can be
 described by a handful of production rules.
 
@@ -153,10 +153,11 @@ parentheses. That's exactly what we have here so, again, we have a successful ma
 \texttt{addition} -- this is exactly how the arbitrary depth of the expression is analyzed.
 
 \usubsec{Functions corresponding to each production rule}{parsingfun}
-In a recursive descent parser there is a function corresponding to every production rule. These functions
-receive the context of parsing (i.e. the text to be parsed and the current position) and return a Boolean
-value which is true if the function could match a certain substring of the text and could move the position
-further towards the end of the text. If the function returns false, the position is not altered.
+One way to realize a recursive descent parser in a programming language is to create a function corresponding
+to every production rule. These functions receive the context of parsing (i.e. the text to be parsed and the
+current position) and return a Boolean value which is true if the function could match a certain substring of
+the text and could move the position further towards the end of the text. If the function returns false, the
+position is not altered.
 
 Following is an example function that matches one character of the text if it can be found in the string
 serving as a character set taken as an argument. The structure of this function is characteristic of the
@@ -212,10 +213,10 @@ been reached. This can be seen in line~4.
 As long as a function finds characters it can consume, it advances the current position, i.e. the first
 element in the local copy of the context (line~8).
 
-If a function matches a certain substring of the text and can not advance further, two things need to be done:
+If a function matches a certain substring of the text and cannot advance further, two things need to be done:
 the context taken by reference has to be changed to reflect the advancement in the analysis of the text and it
-has to return true (lines~9-10). Otherwise it has to merely return false (line~14), the context is left
-unchanged.
+has to return \texttt{true} (lines~9-10). Otherwise it has to merely return \texttt{false} (line~14), the
+context is left unchanged.
 
 \usubsec{Recursive descent}{recdesc}
 The example above shows a simple parsing function working at the character level. It doesn't call any other
@@ -256,12 +257,12 @@ of the text -- it has to be done by the low-level functions.
 
 The sequence of the sub-rules is realized by the \texttt{\&\&} operator of the C++ language. Short-circuit
 evaluation is exploited here: if the first rule doesn't match and thus returns \texttt{false} then the second
-is not called and the entire expression will get a \texttt{false} value.
+is not called and the entire expression will evaluate to \texttt{false}.
 
-Furthermore the order of evaluation is fixed too and goes from the left to the right. So \texttt{addition}
+Furthermore, the order of evaluation is fixed too and goes from the left to the right. So \texttt{addition}
 will receive an updated \texttt{local} -- the value that was altered by the first call to \texttt{character}.
 
-So when all three functions return \texttt{true}, the body of the \texttt{if} statement is evaluated and
+So, when all three functions return \texttt{true}, the body of the \texttt{if} statement is evaluated and
 \texttt{context} receives a value updated by all three functions and now pointing to the next position of the
 text to be parsed.
 
@@ -269,7 +270,7 @@ Alternatives can be realized using the \texttt{||} operator where short-circuit 
 as the second function gets called only if the first failed to match (in which case the first doesn't alter
 the context which is also important).
 
-Please note that composite logical expression should not be constructed as they can lead to mispositioned
+Please note that composite logical expressions should not be constructed as they can lead to mispositioned
 iterators. Let's investigate the following code fragment:
 
 \begin{center}
@@ -305,7 +306,7 @@ the parsing function resulting in a code where parsing and data processing is in
 this is a perfect solution and is easy to handle.
 
 When problems become more complex this method becomes tiresome or even impracticable: there are cases where
-data processing can not be performed at the time of parsing as additional knowledge is needed that can only be
+data processing cannot be performed at the time of parsing as additional knowledge is needed that can only be
 extracted later, possibly after the parsing of the entire input is finished.
 
 In the SyntX framework a \texttt{std::function} (which can wrap a plain function, a method, a function object
@@ -323,9 +324,9 @@ complex = rule1 rule2 rule3
 	\end{minipage}
 \end{center}
 
-then we can not be sure that the entire expression will match until \texttt{rule3} returns \texttt{true}. The
-problem is that we need to extract the results on a rule-basis, otherwise we get the matched range of the
-three rules packed in one string needing yet another extraction.
+\noindent then we cannot be sure that the entire expression will match until \texttt{rule3} returns
+\texttt{true}. The problem is that we need to extract the results on a rule-basis, otherwise we get the
+matched range of the three rules packed in one string needing yet another extraction.
 
 A solution to this problem can be to store the results of the three rules in temporary variables and build the
 complex data only when all three matched successfully.
@@ -532,7 +533,7 @@ dinamically. This means that unnamed, temporary local variables are created on t
 expression above (as e.g. \texttt{character("0")} is the constructor of the class \texttt{character}).
 
 This means that \texttt{operator |}, which creates an \texttt{alternation}, receives two temporary objects as
-arguments. As it needs to accept any kind of \texttt{base\_rule}s, it can not take them by value, so the only
+arguments. As it needs to accept any kind of \texttt{base\_rule}s, it cannot take them by value, so the only
 choice is to take them as constant reference. This is OK, as long as it doesn't want to store these values, as
 the reference of temporaries should not be stored.
 
@@ -546,14 +547,14 @@ The solution to this problem is to create copies of these rules. As it has been 
 these rules (a few pointers and maybe short strings), so copying them is a relatively cheap operation.
 
 The copies have to be made inside the operator functions that take the constant reference of the temporaries.
-The problem here is that all they know of these rules is that they are subclasses of \texttt{base\_rule}.
-Virtual constructors would come handy in this situation if they existed. Instead we need the \texttt{clone}
-function, a typical solution used in heterogeneous containers in several languages. This is why
-\texttt{base\_rule} defines the \texttt{clone} function as pure virtual -- it makes every subclass override
-it, so that the framework can rely on its existence in every rule object.
+The problem here is that all they know of these rules is that they are subclasses of \texttt{base\_rule}.  The
+\emph{virtual constructor idiom} comes handy in this situation, thus we need a \texttt{clone} function, a typical
+solution used e.g. in heterogeneous containers in several languages. This is why \texttt{base\_rule} defines
+the \texttt{clone} function as pure virtual -- it makes every subclass override it, so that the framework can
+rely on its existence in every rule object.
 
 And indeed, what e.g. \texttt{alternation} does in its constructor is that it instantly makes copies of the
-two rules it received using their \texttt{clone} function: 
+two rules it receives using their \texttt{clone} function: 
 
 \begin{center}
 	\begin{minipage}[h]{0.8\textwidth}
@@ -568,7 +569,7 @@ alternation::alternation(
 	\end{minipage}
 \end{center}
 
-And all that \texttt{operator|} does is create an instance of \texttt{alternation} and return it in a
+And all that \texttt{operator|} does is create an instance of \texttt{alternation} and returns it in a
 \texttt{rule}:
 
 \begin{center}
@@ -628,9 +629,7 @@ rule addend;
 
 but it is a completely empty rule until it is defined in line~2. This means that the copy that is stored by
 the instance of \texttt{alternation} and eventually the rule \texttt{addition} is not the final value of the
-\texttt{addend} rule!
-
-The same is true for the rules \texttt{addend} and \texttt{expression}.
+\texttt{addend} rule! The same is true for the rules \texttt{addend} and \texttt{expression}.
 
 The Fundamental Theorem of Software
 Engineering\footnote{\href{http://en.wikipedia.org/wiki/Fundamental_theorem_of_software_engineering}{en.wikipedia.org/wiki/Fundamental\_theorem\_of\_software\_engineering}}
@@ -664,7 +663,7 @@ decide which rule is terminal and which is non-terminal? Well it doesn't have to
 rule is copied many times and that the copy constructor of a \texttt{rule} is trivial, as the only data member
 it has is a \texttt{shared\_ptr}, this method is feasible.
 
-Thus class \texttt{rule} is basically a wrapper class introducing the needed extra level of indirection. It
+Thus, class \texttt{rule} is basically a wrapper class introducing the needed extra level of indirection. It
 follows that its methods basically delegate the tasks to the rule that's address is stored. E.g. the
 \texttt{test} method looks like this:
 
@@ -672,14 +671,15 @@ follows that its methods basically delegate the tasks to the rule that's address
 	\begin{minipage}[h]{0.8\textwidth}
 		\begin{lstlisting}[language=C++, breaklines=true]
 bool rule::test(match_range &context, match_range &the_match_range) {
-	if (!(*the_rule)) return false;
+	if (!(*the_rule)) throw undefined_rule();
 	return (*the_rule)->match(context, the_match_range);
 }
 		\end{lstlisting}
 	\end{minipage}
 \end{center}
 
-Undefined rules return \texttt{false}, other rules return what the rule inside returns.
+Undefined rules throw an exception (\texttt{undefined\_rule} -- defined as a public inner class of
+\texttt{rule}), other rules return what the rule inside returns.
 
 \vspace{0.8em}
 One might ask why the name of the \texttt{rule} class is so short and one that doesn't reflect its purpose.
@@ -689,25 +689,27 @@ framework these variables represent rules of a grammar and nothing more, so thei
 \texttt{rule}. This way the code is short, easy to understand and reflects how the writer of code understands
 it, which is more important than what the creator of the framework sees.
 
-This is why the base class of the rule hierarchy was called \texttt{base\_rule} and not simply \texttt{rule}.
+This is also why the base class of the rule hierarchy was called \texttt{base\_rule} and not simply
+\texttt{rule}.
 
 \usubsec{The operators of the framework}{operators}
 The header that contains the definition of class \texttt{rule} also hosts a number of global operators, the
-ones that represent the EBNF operators in the framework. Although these are global operators by nature, they
-create \texttt{rule} objects so they really belong to the class even if the language has no way to express
-this relationship. This is why they were placed here.
+ones that represent the EBNF operators in the framework. Although these operators are not members of
+\texttt{rule}, they create \texttt{rule} objects and they really belong to the class. They reside in the same
+namespace and are found by
+\emph{Koenig-lookup}\footnote{\href{http://en.wikipedia.org/wiki/Argument-dependent_name_lookup}{http://en.wikipedia.org/wiki/Argument-dependent\_name\_lookup}}.
 
 Unfortunately EBNF operators can not all be realized in C++ as only the C++ operators are available for
 overloading. The ones closest to EBNF were chosen.
 
 The rule of thumb that one should only overload an operator if it performs the same operation as on ints does
 not apply here, in my opinion, as this is an entirely different context where operators have a different
-meaning, one that is known to everyone familiar with the field. Thus, I used operators quite freely and did
-not hesitate when I assigned an operator a function that didn't even resemble the operation that it performs
+meaning, one that is known to everyone familiar with the field. Thus, operators were used quite freely and,
+quite often, an operator was assigned a function that didn't even resemble the operation that it performs
 on ints.
 
 Another problem is that there is no operator in EBNF for concatenation. If the name of two rules are written
-after one another then it means that the first has to follow the second. This is something that can not be done
+after one another then it means that the first has to follow the second. This is something that cannot be done
 in C++, there has to be an operator between every two operands. This is an example for an operator that was
 defined randomly. In this case the shift left operator was used (\verb!<<!) as it is already used for a
 similar purpose in STL. For the sake of consistency, the operator \verb!<<=! was used as the assignment
@@ -733,8 +735,8 @@ The following table summarizes the operators of the SyntX framework.
 	\end{center}
 \end{table}
 
-An interesting result of the C++ operator overloading is that the postfix EBNF operators \verb!*!, \verb!+! and
-\verb!?! become prefix operators and \verb+!+ has to be used instead of \verb!?!.
+An interesting side-effect of the C++ operator overloading is that the postfix EBNF operators \verb!*!,
+\verb!+! and \verb!?! become prefix operators and \verb+!+ has to be used instead of \verb!?!.
 
 \usubsec{The built-in rules (terminal symbols)}{terminals}
 There is a great number of built-in rules defining terminal symbols in the framework. Most ordinary
@@ -767,8 +769,8 @@ The following table summarizes the built-in rules (terminal symbols) in the fram
 The \texttt{epsilon} rule which does not consume anything but always returns \texttt{true} might seem useless.
 As the consumption of white spaces can only by realized with prefix operators (\verb!~! and \verb!-!), there
 always has to be a rule after them. When the white spaces at the end of the input are to be consumed,
-\texttt{epsilon} comes into picture. This can be necessary if one wants to test whether the match was a full
-match, i.e. the entire input matched the grammar and not just a part of it.
+\texttt{epsilon} comes into the picture. This can be necessary if one wants to test whether the match was a
+full match, i.e. the entire input matched the grammar and not just a part of it.
 
 \usubsec{An example}{example}
 Finally the introductory grammar on page \pageref{lst:hellogrammar} is given here in SyntX to show how the operators and built-in rules can be

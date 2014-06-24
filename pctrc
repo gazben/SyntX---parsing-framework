@@ -1,4 +1,4 @@
-("Example configuration"
+("SyntX"
 	(compiler_name "clang++")
 	(dont_link_flag "-c")
 	(output_flag "-o")
