@@ -27,13 +27,13 @@
 
 namespace util {
 	namespace parser {
-		bool whitespace::test(base_rule::match_range &context, base_rule::match_range &the_match_range) {
+		bool whitespace::test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
 			base_rule::match_range range;
 			base_rule::match_range local_context = context;
 
 			while (local_context.first != local_context.second && ::isspace(*local_context.first)) ++local_context.first;
 
-			if (a_rule->match(local_context, range)) {
+			if (a_rule->match(local_context, range, ast_root)) {
 				the_match_range.first = range.first;
 				the_match_range.second = range.second;
 				context = local_context;

@@ -1,0 +1,7 @@
+while variable;
+
+while (9 > 3) {
+	if (2 = 3) {
+		2 + 3;
+	}
+}

@@ -87,7 +87,7 @@ namespace util {
 				/**
 				 * @copydoc util::parser::base_rule::test
 				 */
-				virtual bool test(match_range &context, match_range &the_match_range) override;
+				virtual bool test(match_range &context, match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
 
 				/**
 				 * @copydoc util::parser::base_rule::clone

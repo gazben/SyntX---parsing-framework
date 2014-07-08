@@ -26,14 +26,21 @@
 
 namespace util {
 	namespace parser {
-		bool concatenation::test(base_rule::match_range &context, base_rule::match_range &the_match_range) {
+		bool concatenation::test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
 			base_rule::match_range first_range, second_range;
 			base_rule::match_range local_context = context;
+			std::shared_ptr<base_rule::node> first_child, second_child;
 
-			if (first->match(local_context, first_range) && second->match(local_context, second_range)) {
+			if (first->match(local_context, first_range, first_child) && second->match(local_context, second_range, second_child)) {
 				the_match_range.first = first_range.first;
 				the_match_range.second = second_range.second;
 				context = local_context;
+
+				if (get_build_ast()) {
+					ast_root = std::make_shared<base_rule::node>(base_rule::node::type::concatenation);
+					ast_root->children.push_back(first_child);
+					ast_root->children.push_back(second_child);
+				}
 
 				return true;
 			}

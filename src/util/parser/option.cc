@@ -26,16 +26,23 @@
 
 namespace util {
 	namespace parser {
-		bool option::test(base_rule::match_range &context, base_rule::match_range &the_match_range) {
+		bool option::test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
 			base_rule::match_range range;
 			base_rule::match_range local_context = context;
+			std::shared_ptr<base_rule::node> child;
 
-			if (optional_rule->match(local_context, range)) {
+			if (optional_rule->match(local_context, range, child)) {
 				the_match_range = range;
 				context = local_context;
+
+				if (get_build_ast()) {
+					ast_root = std::make_shared<base_rule::node>(base_rule::node::type::option);
+					ast_root->children.push_back(child);
+				}
 			}
 			else {
 				the_match_range.first = the_match_range.second = context.first;
+				if (get_build_ast()) ast_root = std::shared_ptr<base_rule::node>();
 			}
 			
 			return true;

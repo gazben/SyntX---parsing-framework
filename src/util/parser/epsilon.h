@@ -44,7 +44,7 @@ namespace util {
 				/**
 				 * @copydoc util::parser::base_rule::test
 				 */
-				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range) override {
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override {
 					the_match_range.first = the_match_range.second = context.first;
 					return true;
 				}

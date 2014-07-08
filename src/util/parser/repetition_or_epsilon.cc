@@ -26,16 +26,28 @@
 
 namespace util {
 	namespace parser {
-		bool repetition_or_epsilon::test(base_rule::match_range &context, base_rule::match_range &the_match_range) {
+		bool repetition_or_epsilon::test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
 			base_rule::match_range range;
 			base_rule::match_range local_context = context;
+			std::shared_ptr<base_rule::node> child;
+			bool first_child = true;
 
 			the_match_range.first = the_match_range.second = context.first;
 
-			while (repeated_rule->match(local_context, range)) {
+			while (repeated_rule->match(local_context, range, child)) {
 				the_match_range.second = range.second;
 				context = local_context;
+
+				if (get_build_ast()) {
+					if (first_child) {
+						ast_root = std::make_shared<base_rule::node>(base_rule::node::type::repetition_or_epsilon);
+						first_child = false;
+					}
+					ast_root->children.push_back(child);
+				}
 			}
+
+			if (get_build_ast() && first_child) ast_root = std::shared_ptr<base_rule::node>();
 
 			return true;
 		}

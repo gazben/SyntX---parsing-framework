@@ -28,7 +28,7 @@
 
 namespace util {
 	namespace parser {
-		bool keyword::test(base_rule::match_range &context, base_rule::match_range &the_match_range) {
+		bool keyword::test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
 			if (context.first == context.second) return false;
 
 			base_rule::match_range local_context = context;
@@ -54,6 +54,9 @@ namespace util {
 				the_match_range.first = context.first;
 				the_match_range.second = local_context.first;
 				context = local_context;
+
+				if (get_build_ast()) ast_root = std::make_shared<base_rule::node>(std::string(the_match_range.first, the_match_range.second)); 
+
 				return true;
 			}
 			else return false;

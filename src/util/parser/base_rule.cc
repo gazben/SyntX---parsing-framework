@@ -30,10 +30,13 @@
 
 namespace util {
 	namespace parser {
-		bool base_rule::match(match_range &context, match_range &the_match_range) {
+		std::shared_ptr<base_rule::node> base_rule::dont_build_ast;
+		bool base_rule::build_ast = false;
+
+		bool base_rule::match(match_range &context, match_range &the_match_range, std::shared_ptr<node> &ast_root) {
 			match_range a_range;
 
-			if (test(context, a_range)) {
+			if (test(context, a_range, ast_root)) {
 				the_match_range = a_range;
 
 				if (the_semantic_action) {

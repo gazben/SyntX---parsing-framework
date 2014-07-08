@@ -27,6 +27,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 #include <utility>
 #include <functional>
 
@@ -41,8 +42,59 @@ namespace util {
 				using semantic_action = std::function<void(std::string const &)>; /**< The function type of semantic actions. */
 				using match_range = std::pair< std::string::const_iterator, std::string::const_iterator >; /**< The type of ranges representing match results and ranges to match. */
 
+				/**
+				 * Represents a node of the AST (Abstract Syntax Tree) that is automatically built while parsing if \ref build_ast is set to true.
+				 */
+				struct node {
+					/**
+					 * The type of the node.
+					 */
+					enum class type {
+						/**
+						 * The node represents a value (a leaf in the AST).
+						 */
+						value, 
+						/**
+						 * The node represents an \ref util::parser::alternation -- its child is the alternative that matched.
+						 */
+						alternation,
+						/**
+						 * The node represents a \ref util::parser::concatenation -- its children are the two elements that appear one after the other.
+						 */
+						concatenation,
+						/**
+						 * The node represents an \ref util::parser::option -- its child is the optional element or a null pointer.
+						 */
+						option,
+						/**
+						 * The node represents a \ref util::parser::repetition -- its children are the elements of the type that is repeated.
+						 */
+						repetition,
+						/**
+						 * The node represents a \ref util::parser::repetition_or_epsilon -- its children are the elements of the type that is repeated or a null pointer.
+						 */
+						repetition_or_epsilon};
+
+					type the_type; /**< The \ref util::parser::base_rule::node::type of the node. */
+					std::string the_value; /**< The value of the node. */
+					std::vector<std::shared_ptr<node>> children; /**< The children of the node. */
+
+					/**
+					 * Constructs a value node.
+					 * @param a_value the value of the node
+					 */
+					node(std::string a_value) :	the_type(type::value), the_value(a_value) {}
+
+					/**
+					 * Constructs a node of the given type (tipically used for tyeps other than value).
+					 * @param a_type the type of the node
+					 */
+					node(type a_type) :	the_type(a_type) {}
+				};
+
 			private:
 				semantic_action the_semantic_action; /**< The semantic action assigned to this rule. */
+				static bool build_ast; /**< Stores whether an AST is to be built. */
 
 			public:
 				/**
@@ -57,10 +109,11 @@ namespace util {
 				 * the second points to the end of the text)
 				 * @param the_match_range the beginning and end of the matched range -- this variable
 				 * is only altered if there is a match
+				 * @param ast_root the pointer to the root of the AST that is built by the rule
 				 * @return true if there is a match
 				 * @note This method may throw an exception (\ref rule::test throws \ref rule::undefined_rule).
 				 */
-				virtual bool test(match_range &context, match_range &the_match_range) = 0;
+				virtual bool test(match_range &context, match_range &the_match_range, std::shared_ptr<node> &ast_root = dont_build_ast) = 0;
 
 				/**
 				 * Contains the operations performed when a rule is tried on the current position.
@@ -70,9 +123,10 @@ namespace util {
 				 * assigned to this rule).
 				 * @param context the range to be matched
 				 * @param the_match_range the consumed range
+				 * @param ast_root the pointer to the root of the AST that is built by the rule
 				 * @return true if there was a match
 				 */
-				bool match(match_range &context, match_range &the_match_range);
+				bool match(match_range &context, match_range &the_match_range, std::shared_ptr<node> &ast_root = dont_build_ast);
 
 				/**
 				 * Assigns a \ref semantic_action to the rule.
@@ -94,6 +148,21 @@ namespace util {
 				 * @return true if the operation was successful
 				 */
 				static bool file_to_string(std::string const &filename, std::string &the_contents);
+
+				/**
+				 * Sets \ref build_ast that stores whether an AST is built during the parsing process.
+				 * @param a_value the new value of \ref build_ast.
+				 */
+				static void set_build_ast(bool a_value) {build_ast = a_value;}
+
+				/**
+				 * Returns the current value of \ref build_ast.
+				 * @return the current value of \ref build_ast
+				 */
+				static bool get_build_ast() {return build_ast;}
+
+			protected:
+				static std::shared_ptr<node> dont_build_ast; /**< The default value of AST root (used when the tree is not built). */
 		};
 	}
 }

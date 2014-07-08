@@ -30,6 +30,7 @@
 \usepackage[lighttt]{lmodern}	%needed to have bold teletype (to have bold keywords in lstlisting)
 \usepackage{hfoldsty}			%has to go after \usepackage{lmodern} to take effect
 \usepackage{listings}
+\usepackage{graphicx}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -375,7 +376,9 @@ using semantic_action = std::function<void(std::string const &)>;
 One action can be assigned to a rule and it's stored in the \texttt{the\_semantic\_action} data member of the
 class.
 
-The \texttt{match} method handles the tasks associated with matching.
+The \texttt{match} method handles the tasks associated with matching\footnote{This is not the actual code of
+the function -- the parts concerning the automatic AST generation are discussed on page \pageref{subsec:ast}.
+This is true for the coming examples as well.}.
 
 \begin{center}
 	\begin{minipage}[h]{0.8\textwidth}
@@ -773,8 +776,10 @@ always has to be a rule after them. When the white spaces at the end of the inpu
 full match, i.e. the entire input matched the grammar and not just a part of it.
 
 \usubsec{An example}{example}
-Finally, the introductory grammar on page \pageref{lst:hellogrammar} is given here in SyntX to show how the operators and built-in rules can be
-used. Please refer to the Doxygen documentation and the source code for more examples.
+Having duscussed the most important features of the framework, a fully functional example is discuessed in
+this subsection. The introductory grammar on page \pageref{lst:hellogrammar} is given here in SyntX to show
+how the operators and built-in rules can be used. Please refer to the Doxygen documentation and the source
+code for more examples.
 
 \begin{center}
 	\begin{minipage}[h]{0.8\textwidth}
@@ -796,6 +801,315 @@ else
 		\end{lstlisting}
 	\end{minipage}
 \end{center}
+
+\usubsec{Automatic AST generation}{ast}
+The processing of texts based on a simple grammar can be done on the fly, i.e. appropriate semantic actions (defined in
+e.g. lambdas) can be added to the rules. Examples showing how this can be done are shipped with the SyntX
+framework.
+
+When a grammar becomes complex this task becomes very exhausting especially when we consider the fact that a
+subrule (a rule that is a part of another rule) matching some part of the text doesn't mean that rule that
+contains the subrule will match as well. So an action that is performed when a certain rule matches might have
+to be undone when it turns out that parsing went the wrong way.
+
+Another frequent situation is that a text has to be parsed several times to gather all the information
+needed to fully process the information represented by the text. These cases cannot be handled with semantic
+actions -- only if what the actions do is build a representation of the text that can later be traversed the
+needed times.
+
+This is such a common task that a parsing framework should directly support it. The data structure that is
+typically built is called the \emph{Abstract Syntax Tree (AST)}, which is basically a tree representation of
+the text's structure.
+
+SyntX can build such a tree automatically. Naturally the framework does not know the logic build-up of the
+text, so it rather works with the grammatical structure. The tree consists of leaf nodes containing subtrings
+matched by rules like \texttt{character}, \texttt{identifier} or \texttt{keyword} and nodes that have children
+matched by the rules that are given using operators (\texttt{<<}, \texttt{|}, \texttt{*}, etc.).
+
+For example if our rule is the following:
+
+\begin{center}
+	\begin{minipage}[h]{0.7\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true]
+addition <<= integer << +( character("+") << integer );
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+and our input is:
+
+\begin{center}
+	\begin{minipage}[h]{0.2\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true]
+2 + 3 + 4
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+then the tree generated is the following:
+
+\begin{figure}[h!]
+	\centering
+		\includegraphics[width=0.5\textwidth]{ast}
+		\caption{\emph{The Abstract Syntax Tree of the expression: 2 + 3 + 4}}
+		\label{fig:ast}
+\end{figure}
+
+Naturally, the node representing a \texttt{repetition} may have an unlimited number of children.
+
+The data structure representing a node of the AST can be found inside the \texttt{base\_rule} class:
+\begin{center}
+	\begin{minipage}[h]{0.9\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+struct node {
+	enum class type {value, alternation, concatenation, option, repetition, repetition_or_epsilon};
+
+	type the_type;
+	std::string the_value;
+	std::vector<std::shared_ptr<node>> children;
+
+	node(std::string a_value): the_type(type::value),the_value(a_value) {}
+
+	node(type a_type): the_type(a_type) {}
+};
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+The type of the node can determined using \texttt{the\_type} member which has one of the value of the
+\texttt{type} enumeration. The nodes could be represented by a class hierarchy with one class assigned to each
+operator and one that would serve as a leaf node, but this was considered unuseful as that would require the
+user of the framework to subclass the node class and would also complicate the building process while not
+really yielding any benefits.
+
+The subtrings matched by the character-level rules are stored in \texttt{the\_value} member.
+
+A node might have no children at all, or it might have an unlimited number of offsprings. They are stored in
+the \texttt{children} container. Nodes are created dynamically and stored using \texttt{shared\_ptr}s. This is
+done to avoid memory leaks due to the fact that subtrees might have to be deleted when a subrule part of a
+complex rule fails.
+
+If the AST is needed, the \texttt{base\_rule::set\_build\_ast(true);} call has to be issued before parsing
+(line~2) and the reference of the root of the AST (line~13) to be built has to be given to the \texttt{match}
+method call of the highest level rule (line~15) as seen below:
+
+\begin{center}
+	\begin{minipage}[h]{0.85\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+int main() {
+	base_rule::set_build_ast(true);
+
+	rule addition, addend, expression;
+
+	addition <<= -addend << *(-character("+") << -addend);
+	addend <<= -range('0', '9') | -expression;
+	expression <<= -character("(") << -addition << -character(")");
+
+	std::string input = "2 + (3 + 4)\n";
+	base_rule::match_range context(input.cbegin(), input.cend());
+	base_rule::match_range result;
+	std::shared_ptr<base_rule::node> root;
+
+	if (addition.match(context, result, root)) {
+		std::cout << "Matched: " << std::string(result.first, result.second);
+		parse_tree(root);
+	} else {
+		std::cout << "Didn't match";
+	}
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+This example also shows how the whitespaces can be consumed using the operators \texttt{-} or \texttt{$\sim$}.
+
+The resulting AST can be traversed by writing a simple recursive function such as the one in the following
+example. Line~17 in the code above shows how it should be called.
+
+\begin{center}
+	\begin{minipage}[h]{0.95\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+void parse_tree(std::shared_ptr<base_rule::node> const &node, size_t depth=0) {
+	if (node) {
+		for (size_t i = 0; i < depth; ++i) std::cout << " ";
+
+		switch (node->the_type) {
+			case base_rule::node::type::value:
+				std::cout << node->the_value << std::endl;
+			break;
+
+			case base_rule::node::type::alternation:
+				std::cout << "alternation" << std::endl;
+			break;
+
+			case base_rule::node::type::concatenation:
+				std::cout << "concatenation" << std::endl;
+			break;
+
+			case base_rule::node::type::option:
+				std::cout << "option" << std::endl;
+			break;
+
+			case base_rule::node::type::repetition:
+				std::cout << "repetition" << std::endl;
+			break;
+
+			case base_rule::node::type::repetition_or_epsilon:
+				std::cout << "repetition_or_epsilon" << std::endl;
+			break;
+		}
+
+		for (auto &a_node: node->children) parse_tree(a_node, depth + 1);
+	}
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+Earlier we have discussed the code of \texttt{match} and \texttt{test} methods. Those listings were not
+identical to the actual code of these methods found in the framework as the parts concering the buidling of
+the AST were omitted.
+
+Actually only a little needs to be added to those methods. Both of them receive an extra argument: the
+reference of a pointer to the subtree's root that has to be built by the rule. This pointer is overwritten
+with the address of the newly created node and the tree is created by the successive recursive function calls
+as the parser digs into the text. The default value of this argument is the reference of a static node -- this
+is needed as a reference has to be initialized, but it would be cumbersome for the user to give a root
+reference even if an AST is not needed\footnote{The \texttt{match} method could have been overloaded, but the
+code of the two function would have been almost identical, so that was considered as bad style.}.
+
+The method \texttt{match} simply delegates the given pointer to the \texttt{test} function.
+
+The \texttt{test} method of character-level rules and high-level rules are different so an example for both
+are discussed below.
+
+First, let's dwelve into the code of \texttt{character} class's \texttt{test} method. This is a class that
+operates at the character-level so it has to produce leaf node in the AST, one that has no children and
+contains the result of a match (a string containing a single character in this case).
+
+The only difference to the code seen earlier apart from the extra argument is that it creates a new node in
+line~14 and saves its address in the \texttt{ast\_root} variable. This is only done if an AST is needed,
+otherwise time and memory is not wasted on it.
+
+The \texttt{get\_build\_ast()} call reads the value of the static \texttt{build\_ast} variable.
+
+The value of the node is set by creating a \texttt{std::string} object using the \texttt{const\_iterator}s
+of \texttt{the\_match\_range}. No children are set which results in two null pointers showing that this node
+is a leaf.
+
+\begin{center}
+	\begin{minipage}[ht]{0.95\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+bool character::test(base_rule::match_range &context, match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
+	if (context.first == context.second) return false;
+
+	base_rule::match_range local_context = context;
+
+	for (auto allowed_character: allowed_characters) {
+		if (*local_context.first == allowed_character) {
+			++local_context.first;
+
+			the_match_range.first = context.first;
+			the_match_range.second = local_context.first;
+			context = local_context;
+
+			if (get_build_ast()) ast_root = std::make_shared<base_rule::node>(std::string(the_match_range.first, the_match_range.second)); 
+
+			return true;
+		}
+	}
+
+	return false;
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+The other type \texttt{test} method can be found in the high-level rules that are instantiated using
+operators. The code below belongs to the \texttt{concatenation} rule.
+
+\begin{center}
+	\begin{minipage}[ht]{0.95\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+bool concatenation::test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
+	base_rule::match_range first_range, second_range;
+	base_rule::match_range local_context = context;
+	std::shared_ptr<base_rule::node> first_child, second_child;
+
+	if (first->match(local_context, first_range, first_child) && second->match(local_context, second_range, second_child)) {
+		the_match_range.first = first_range.first;
+		the_match_range.second = second_range.second;
+		context = local_context;
+
+		if (get_build_ast()) {
+			ast_root = std::make_shared<base_rule::node>(base_rule::node::type::concatenation);
+			ast_root->children.push_back(first_child);
+			ast_root->children.push_back(second_child);
+		}
+
+		return true;
+	}
+	else return false;
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+This rule creates a node that always has two children: one for each of the two rules following eachother. The
+rule calls two rules that has to match for this one to be successful. Those rules can be very complex and
+create a large subtree each.
+
+The roots of the two subtrees are created locally in line~4 and fed to the two subrules in line~6. If the
+match is successful and an AST is needed then a new node is created in line~12. This one is not constructed
+with the string containing the match range as it could be a complex match of several rules and would be of
+little use to the user. This node will tell the traversing algorithm the type of operator that matched at the
+current position instead. It is \texttt{type::concatenation} in this case.
+
+The children of this node are the two nodes (or subtrees) that are created by the \texttt{match} calls of the
+inner rules of \texttt{concatenation} in line~6. They are added to the node in the lines~13 and 14.
+
+Finally the code of \texttt{repetition::test} is also listed here to show how an unlimited number of children
+can be handled.
+
+\begin{center}
+	\begin{minipage}[ht]{0.95\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+bool repetition::test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
+	base_rule::match_range range;
+	base_rule::match_range local_context = context;
+	std::shared_ptr<base_rule::node> child;
+
+	if (repeated_rule->match(local_context, range, child)) {
+		the_match_range = range;
+
+		if (get_build_ast()) {
+			ast_root=std::make_shared<base_rule::node>(base_rule::node::type::repetition);
+			ast_root->children.push_back(child);
+		}
+
+		while (repeated_rule->match(local_context, range, child)) {
+			the_match_range.second = range.second;
+
+			if (get_build_ast()) {
+				ast_root->children.push_back(child);
+			}
+		}
+
+		context = local_context;
+
+		return true;
+	}
+
+	return false;
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+It is important to note that the node is created only once (when the first child is added). When the
+\texttt{while} loop is entered in line~14, the node already exists, so a child can be added to it. This
+situation is handled similarly in \texttt{repetition\_or\_epsilon::test}, the code of which is not listed
+here. The reader is encouraged to have a look at it though.
 
 \vfill
 \vfill

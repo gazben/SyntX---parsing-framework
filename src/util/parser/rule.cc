@@ -33,9 +33,9 @@
 
 namespace util {
 	namespace parser {
-		bool rule::test(match_range &context, match_range &the_match_range) {
+		bool rule::test(match_range &context, match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
 			if (!(*the_rule)) throw undefined_rule();
-			return (*the_rule)->match(context, the_match_range);
+			return (*the_rule)->match(context, the_match_range, ast_root);
 		}
 
 		rule &rule::operator <<=(base_rule const &rhs) {
