@@ -803,28 +803,30 @@ else
 \end{center}
 
 \usubsec{Automatic AST generation}{ast}
-The processing of texts based on a simple grammar can be done on the fly, i.e. appropriate semantic actions (defined in
-e.g. lambdas) can be added to the rules. Examples showing how this can be done are shipped with the SyntX
-framework.
+The processing of texts based on a simple grammar can be done on the fly, i.e. appropriate semantic actions
+(defined in e.g. lambdas) can be added to the rules. Examples showing how this can be done are shipped with
+the SyntX framework.
 
 When a grammar becomes complex this task becomes very exhausting especially when we consider the fact that a
-subrule (a rule that is a part of another rule) matching some part of the text doesn't mean that rule that
+subrule (a rule that is a part of another rule) matching some part of the text doesn't mean that the rule that
 contains the subrule will match as well. So an action that is performed when a certain rule matches might have
-to be undone when it turns out that parsing went the wrong way.
+to be undone when it turns out that parsing went the wrong way. This problem was discussed in the subsection
+on action starting on page \pageref{subsec:actions}.
 
-Another frequent situation is that a text has to be parsed several times to gather all the information
-needed to fully process the information represented by the text. These cases cannot be handled with semantic
-actions -- only if what the actions do is build a representation of the text that can later be traversed the
-needed times.
+Another frequent situation is that a text has to be parsed several times to gather all the information needed
+to fully understand and process the information represented by the text. These cases cannot be handled with
+semantic actions -- only if what the actions do is build a representation of the text that can later be
+traversed the needed times.
 
 This is such a common task that a parsing framework should directly support it. The data structure that is
-typically built is called the \emph{Abstract Syntax Tree (AST)}, which is basically a tree representation of
+typically built is called \emph{Abstract Syntax Tree (AST)}, which is basically a tree representation of
 the text's structure.
 
-SyntX can build such a tree automatically. Naturally the framework does not know the logic build-up of the
+SyntX can build such a tree automatically. Naturally the framework does not know the internal build-up of the
 text, so it rather works with the grammatical structure. The tree consists of leaf nodes containing subtrings
-matched by rules like \texttt{character}, \texttt{identifier} or \texttt{keyword} and nodes that have children
-matched by the rules that are given using operators (\texttt{<<}, \texttt{|}, \texttt{*}, etc.).
+matched by rules like \texttt{character}, \texttt{identifier} or \texttt{keyword} defining terminal symbols
+and nodes that have children matched by the rules that are given using operators (\texttt{<<}, \texttt{|},
+\texttt{*}, etc.).
 
 For example if our rule is the following:
 
@@ -855,7 +857,8 @@ then the tree generated is the following:
 		\label{fig:ast}
 \end{figure}
 
-Naturally, the node representing a \texttt{repetition} may have an unlimited number of children.
+Naturally, the node representing a \texttt{repetition} may have an unlimited number of children while
+\texttt{concatenation} always has two.
 
 The data structure representing a node of the AST can be found inside the \texttt{base\_rule} class:
 \begin{center}
@@ -876,9 +879,9 @@ struct node {
 	\end{minipage}
 \end{center}
 
-The type of the node can determined using \texttt{the\_type} member which has one of the value of the
+The type of the node can determined using \texttt{the\_type} member which has one of the values of the
 \texttt{type} enumeration. The nodes could be represented by a class hierarchy with one class assigned to each
-operator and one that would serve as a leaf node, but this was considered unuseful as that would require the
+operator and one that would serve as a leaf node, but this was considered unuseful as it would require the
 user of the framework to subclass the node class and would also complicate the building process while not
 really yielding any benefits.
 
@@ -886,8 +889,8 @@ The subtrings matched by the character-level rules are stored in \texttt{the\_va
 
 A node might have no children at all, or it might have an unlimited number of offsprings. They are stored in
 the \texttt{children} container. Nodes are created dynamically and stored using \texttt{shared\_ptr}s. This is
-done to avoid memory leaks due to the fact that subtrees might have to be deleted when a subrule part of a
-complex rule fails.
+done to avoid memory leaks due to the fact that subtrees might have to be deleted when a subrule that is part
+of a complex rule fails.
 
 If the AST is needed, the \texttt{base\_rule::set\_build\_ast(true);} call has to be issued before parsing
 (line~2) and the reference of the root of the AST (line~13) to be built has to be given to the \texttt{match}
@@ -967,7 +970,7 @@ void parse_tree(std::shared_ptr<base_rule::node> const &node, size_t depth=0) {
 \end{center}
 
 Earlier we have discussed the code of \texttt{match} and \texttt{test} methods. Those listings were not
-identical to the actual code of these methods found in the framework as the parts concering the buidling of
+identical to the actual code of these methods found in the framework as the parts concering the building of
 the AST were omitted.
 
 Actually only a little needs to be added to those methods. Both of them receive an extra argument: the
@@ -984,7 +987,7 @@ The \texttt{test} method of character-level rules and high-level rules are diffe
 are discussed below.
 
 First, let's dwelve into the code of \texttt{character} class's \texttt{test} method. This is a class that
-operates at the character-level so it has to produce leaf node in the AST, one that has no children and
+operates at the character-level so it has to produce a leaf node in the AST, one that has no children and
 contains the result of a match (a string containing a single character in this case).
 
 The only difference to the code seen earlier apart from the extra argument is that it creates a new node in
@@ -1025,7 +1028,7 @@ bool character::test(base_rule::match_range &context, match_range &the_match_ran
 	\end{minipage}
 \end{center}
 
-The other type \texttt{test} method can be found in the high-level rules that are instantiated using
+The other type of \texttt{test} method can be found in the high-level rules that are instantiated using
 operators. The code below belongs to the \texttt{concatenation} rule.
 
 \begin{center}
@@ -1056,7 +1059,7 @@ bool concatenation::test(base_rule::match_range &context, base_rule::match_range
 \end{center}
 
 This rule creates a node that always has two children: one for each of the two rules following eachother. The
-rule calls two rules that has to match for this one to be successful. Those rules can be very complex and
+rule calls two rules that have to match for this one to be successful. Those rules can be very complex and
 create a large subtree each.
 
 The roots of the two subtrees are created locally in line~4 and fed to the two subrules in line~6. If the
@@ -1107,8 +1110,8 @@ bool repetition::test(base_rule::match_range &context, base_rule::match_range &t
 \end{center}
 
 It is important to note that the node is created only once (when the first child is added). When the
-\texttt{while} loop is entered in line~14, the node already exists, so a child can be added to it. This
-situation is handled similarly in \texttt{repetition\_or\_epsilon::test}, the code of which is not listed
+\texttt{while} loop is entered in line~14, the node already exists, so a child can be added to it in line~18.
+This situation is handled similarly in \texttt{repetition\_or\_epsilon::test}, the code of which is not listed
 here. The reader is encouraged to have a look at it though.
 
 \vfill
