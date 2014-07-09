@@ -865,10 +865,11 @@ The data structure representing a node of the AST can be found inside the \textt
 	\begin{minipage}[h]{0.9\textwidth}
 		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
 struct node {
-	enum class type {value, alternation, concatenation, option, repetition, repetition_or_epsilon};
+	enum class type {value, alternation, concatenation, option, repetition, repetition_or_epsilon, named_rule};
 
 	type the_type;
 	std::string the_value;
+	std::string the_rule_name;
 	std::vector<std::shared_ptr<node>> children;
 
 	node(std::string a_value): the_type(type::value),the_value(a_value) {}
@@ -888,9 +889,11 @@ really yielding any benefits.
 The subtrings matched by the character-level rules are stored in \texttt{the\_value} member.
 
 A node might have no children at all, or it might have an unlimited number of offsprings. They are stored in
-the \texttt{children} container. Nodes are created dynamically and stored using \texttt{shared\_ptr}s. This is
-done to avoid memory leaks due to the fact that subtrees might have to be deleted when a subrule that is part
-of a complex rule fails.
+the \texttt{children} container. Nodes are created dynamically and stored using \texttt{shared\_ptr}s. 
+
+There is a type called \texttt{named\_rule} and a member storing a rule's name (\texttt{the\_rule\_name}).
+This is a feature that enables users to add extra nodes to an AST corresponding to user defined non-terminals.
+More about this can be found later.
 
 If the AST is needed, the \texttt{base\_rule::set\_build\_ast(true);} call has to be issued before parsing
 (line~2) and the reference of the root of the AST (line~13) to be built has to be given to the \texttt{match}
@@ -908,7 +911,7 @@ int main() {
 	addend <<= -range('0', '9') | -expression;
 	expression <<= -character("(") << -addition << -character(")");
 
-	std::string input = "2 + (3 + 4)\n";
+	std::string input = "2 + 3 + 4\n";
 	base_rule::match_range context(input.cbegin(), input.cend());
 	base_rule::match_range result;
 	std::shared_ptr<base_rule::node> root;
@@ -960,6 +963,10 @@ void parse_tree(std::shared_ptr<base_rule::node> const &node, size_t depth=0) {
 			case base_rule::node::type::repetition_or_epsilon:
 				std::cout << "repetition_or_epsilon" << std::endl;
 			break;
+
+			case base_rule::node::type::named_rule:
+				std::cout << "named_rule: " << node->the_rule_name << std::endl;
+			break;
 		}
 
 		for (auto &a_node: node->children) parse_tree(a_node, depth + 1);
@@ -968,6 +975,8 @@ void parse_tree(std::shared_ptr<base_rule::node> const &node, size_t depth=0) {
 		\end{lstlisting}
 	\end{minipage}
 \end{center}
+
+The \texttt{named\_rule} type is special and is discussed later.
 
 Earlier we have discussed the code of \texttt{match} and \texttt{test} methods. Those listings were not
 identical to the actual code of these methods found in the framework as the parts concering the building of
@@ -1113,6 +1122,95 @@ It is important to note that the node is created only once (when the first child
 \texttt{while} loop is entered in line~14, the node already exists, so a child can be added to it in line~18.
 This situation is handled similarly in \texttt{repetition\_or\_epsilon::test}, the code of which is not listed
 here. The reader is encouraged to have a look at it though.
+
+There is one additional feature of SyntX's AST-building facilities that's worth mentioning. At the beginning
+of this subsection it was stated that AST's represent the grammatical structure of the text and not the
+internal logic of the text. Fortunately this is not entirely true: the users of the framework can add extra
+nodes to the tree representing their rules. In order to do that, a rule created by the user has to be supplied
+with a name at constuction.
+
+So let's change our little example as follows:
+
+\begin{center}
+	\begin{minipage}[ht]{0.7\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+int main() {
+	base_rule::set_build_ast(true);
+
+	rule addition, addend("addend"), expression;
+
+	addition <<= -addend << *(-character("+") << -addend);
+	addend <<= -range('0', '9') | -expression;
+	expression <<= -character("(") << -addition << -character(")");
+
+	std::string input = "2 + 3 + 4\n";
+	base_rule::match_range context(input.cbegin(), input.cend());
+	base_rule::match_range result;
+	std::shared_ptr<base_rule::node> root;
+
+	if (addition.match(context, result, root)) {
+		std::cout << "Matched: " << std::string(result.first, result.second);
+		parse_tree(root);
+	} else {
+		std::cout << "Didn't match";
+	}
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+The only difference to the previously seen version is that the rule \texttt{addend} was given a name in
+line~4.
+
+The AST generated will now look like this:
+
+\begin{figure}[h!]
+	\centering
+		\includegraphics[width=0.7\textwidth]{ast_named_rule}
+		\caption{\emph{The Abstract Syntax Tree of an expression with a named rule (addend)}}
+		\label{fig:ast}
+\end{figure}
+
+This might not seem very useful in this rather simple example but it becomes very handy when a huge AST based
+on a complex grammar has to be processed.
+
+All it took to achieve to this feature was to give the class \texttt{rule} a new member (\texttt{rule\_name}),
+a new constructor that actually sets this name and the \texttt{test} function had to be altered a bit.
+
+\begin{center}
+	\begin{minipage}[ht]{0.9\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+bool rule::test(match_range &context, match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
+	if (!(*the_rule)) throw undefined_rule();
+	if (rule_name == "")
+		return (*the_rule)->match(context, the_match_range, ast_root);
+	else {
+		std::shared_ptr<base_rule::node> child;
+		if ((*the_rule)->match(context, the_match_range, child)) {
+			if (get_build_ast()) {
+				ast_root = std::make_shared<base_rule::node>(base_rule::node::type::named_rule);
+				ast_root->the_rule_name = rule_name;
+				ast_root->children.push_back(child);
+			}
+			return true;
+		}
+		else return false;
+	}
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+If the rule doesn't have a name (i.e. the \texttt{rule\_name} member is an empty string) then the
+\texttt{test} method merely delegates the context, the match range and root of the AST to the inner
+\texttt{base\_rule} that is wrapped by it. This can be seen in lines~3 and 4. 
+
+On the other hand, if the rule has a name, an extra node has to be inserted. In order to do this, a child node
+is created and fed to the inner rule (lines~6 and 7) and then a new node is created in line~9. It is of type
+\texttt{named\_rule} and stores the name of the rule (line~10).
+
+The child that is created by the inner rule is set as the child of the named rule node in line~11. Of course
+all this is only done if the user requested an AST (line~8).
 
 \vfill
 \vfill

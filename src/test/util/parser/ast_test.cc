@@ -59,7 +59,7 @@ void parse_tree(std::shared_ptr<base_rule::node> const &node, size_t depth = 0) 
 			break;
 
 			case base_rule::node::type::named_rule:
-				std::cout << "named_rule: " << node->the_rule_name;
+				std::cout << "named_rule: " << node->the_rule_name << std::endl;
 			break;
 		}
 
@@ -70,13 +70,13 @@ void parse_tree(std::shared_ptr<base_rule::node> const &node, size_t depth = 0) 
 int main() {
 	base_rule::set_build_ast(true);
 
-	rule addition, addend, expression;
+	rule addition, addend("addend"), expression;
 
 	addition <<= -addend << *(-character("+") << -addend);
 	addend <<= -range('0', '9') | -expression;
 	expression <<= -character("(") << -addition << -character(")");
 
-	std::string input = "2 + (3 + 4)\n";
+	std::string input = "2 + 3 + 4\n";
 	base_rule::match_range context(input.cbegin(), input.cend());
 	base_rule::match_range result;
 	std::shared_ptr<base_rule::node> root;
