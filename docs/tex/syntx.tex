@@ -1187,9 +1187,11 @@ bool rule::test(match_range &context, match_range &the_match_range, std::shared_
 	else {
 		std::shared_ptr<base_rule::node> child;
 		if ((*the_rule)->match(context, the_match_range, child)) {
-			ast_root = std::make_shared<base_rule::node>(base_rule::node::type::named_rule);
-			ast_root->the_value = rule_name;
-			ast_root->children.push_back(child);
+			if (child) {
+				ast_root = std::make_shared<base_rule::node>(base_rule::node::type::named_rule);
+				ast_root->the_value = rule_name;
+				ast_root->children.push_back(child);
+			}
 			return true;
 		}
 		else return false;
@@ -1205,10 +1207,21 @@ the AST to the inner \texttt{base\_rule} that is wrapped by it. This can be seen
 
 On the other hand, if the rule has a name and we are building an AST, an extra node has to be inserted. In
 order to do this, a child node is created and fed to the inner rule (lines~6 and 7) and then a new node is
-created in line~8. It is of type \texttt{named\_rule} and its name is stored in \texttt{the\_value} member of
-the node (line~9).
+created in line~9. It is of type \texttt{named\_rule} and its name is stored in \texttt{the\_value} member of
+the node (line~10).
 
-The child that is created by the inner rule is set as the child of the named rule node in line~10.
+The child that is created by the inner rule is set as the child of the named rule node in line~11.
+
+All this happens only if a child is indeed created by the inner rule. If the inner rule is an \texttt{option}
+or a \texttt{repetition\_or\_epsilon} then it may match successfully an empty string. In this case these rules
+will add null pointer to the tree to show that there is where the tree ends in the current direction. This
+case can be easily checked by converting the child pointer to a boolean value and checking whether it is true
+-- this happens in line~8.
+
+If this check was omitted, a \texttt{named\_rule} node would be inserted in the tree without children which
+could mislead the processing algorithm or simply make it necessary to add an extra conditional statement
+testing whether a named rule is really there. This would be very cumbersome.
+
 \vfill
 \vfill
 \vfill

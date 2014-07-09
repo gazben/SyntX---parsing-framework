@@ -6,3 +6,10 @@ for (int i = 0; i < 10; ++i) {
 for (auto &element: container) {
 	element++;
 }
+
+for (int i = 5; i > 15; ++i) {
+	++apple;
+	for (auto e: container) {
+		++lemon;
+	}
+}
