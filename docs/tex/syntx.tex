@@ -869,7 +869,6 @@ struct node {
 
 	type the_type;
 	std::string the_value;
-	std::string the_rule_name;
 	std::vector<std::shared_ptr<node>> children;
 
 	node(std::string a_value): the_type(type::value),the_value(a_value) {}
@@ -891,9 +890,8 @@ The subtrings matched by the character-level rules are stored in \texttt{the\_va
 A node might have no children at all, or it might have an unlimited number of offsprings. They are stored in
 the \texttt{children} container. Nodes are created dynamically and stored using \texttt{shared\_ptr}s. 
 
-There is a type called \texttt{named\_rule} and a member storing a rule's name (\texttt{the\_rule\_name}).
-This is a feature that enables users to add extra nodes to an AST corresponding to user defined non-terminals.
-More about this can be found later.
+There is a type called \texttt{named\_rule} to support a feature that enables users to add extra nodes to an
+AST corresponding to user defined non-terminals.  More about this can be found later.
 
 If the AST is needed, the \texttt{base\_rule::set\_build\_ast(true);} call has to be issued before parsing
 (line~2) and the reference of the root of the AST (line~13) to be built has to be given to the \texttt{match}
@@ -965,7 +963,7 @@ void parse_tree(std::shared_ptr<base_rule::node> const &node, size_t depth=0) {
 			break;
 
 			case base_rule::node::type::named_rule:
-				std::cout << "named_rule: " << node->the_rule_name << std::endl;
+				std::cout << "named_rule: " << node->the_value << std::endl;
 			break;
 		}
 
@@ -1129,7 +1127,7 @@ internal logic of the text. Fortunately this is not entirely true: the users of 
 nodes to the tree representing their rules. In order to do that, a rule created by the user has to be supplied
 with a name at constuction.
 
-So let's change our little example as follows:
+So let's change our little example as follows.
 
 \begin{center}
 	\begin{minipage}[ht]{0.7\textwidth}
@@ -1182,16 +1180,14 @@ a new constructor that actually sets this name and the \texttt{test} function ha
 		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
 bool rule::test(match_range &context, match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
 	if (!(*the_rule)) throw undefined_rule();
-	if (rule_name == "")
+	if (!get_build_ast() || rule_name == "")
 		return (*the_rule)->match(context, the_match_range, ast_root);
 	else {
 		std::shared_ptr<base_rule::node> child;
 		if ((*the_rule)->match(context, the_match_range, child)) {
-			if (get_build_ast()) {
-				ast_root = std::make_shared<base_rule::node>(base_rule::node::type::named_rule);
-				ast_root->the_rule_name = rule_name;
-				ast_root->children.push_back(child);
-			}
+			ast_root = std::make_shared<base_rule::node>(base_rule::node::type::named_rule);
+			ast_root->the_value = rule_name;
+			ast_root->children.push_back(child);
 			return true;
 		}
 		else return false;
@@ -1201,17 +1197,15 @@ bool rule::test(match_range &context, match_range &the_match_range, std::shared_
 	\end{minipage}
 \end{center}
 
-If the rule doesn't have a name (i.e. the \texttt{rule\_name} member is an empty string) then the
-\texttt{test} method merely delegates the context, the match range and root of the AST to the inner
-\texttt{base\_rule} that is wrapped by it. This can be seen in lines~3 and 4. 
+If the rule doesn't have a name (i.e. the \texttt{rule\_name} member is an empty string) or the AST was not
+requested by the user then the \texttt{test} method merely delegates the context, the match range and root of
+the AST to the inner \texttt{base\_rule} that is wrapped by it. This can be seen in lines~3 and 4. 
 
 On the other hand, if the rule has a name, an extra node has to be inserted. In order to do this, a child node
-is created and fed to the inner rule (lines~6 and 7) and then a new node is created in line~9. It is of type
-\texttt{named\_rule} and stores the name of the rule (line~10).
+is created and fed to the inner rule (lines~6 and 7) and then a new node is created in line~8. It is of type
+\texttt{named\_rule} and its name is stored in \texttt{the\_value} member of the node (line~9).
 
-The child that is created by the inner rule is set as the child of the named rule node in line~11. Of course
-all this is only done if the user requested an AST (line~8).
-
+The child that is created by the inner rule is set as the child of the named rule node in line~10.
 \vfill
 \vfill
 \vfill

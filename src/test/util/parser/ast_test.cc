@@ -59,7 +59,7 @@ void parse_tree(std::shared_ptr<base_rule::node> const &node, size_t depth = 0) 
 			break;
 
 			case base_rule::node::type::named_rule:
-				std::cout << "named_rule: " << node->the_rule_name << std::endl;
+				std::cout << "named_rule: " << node->the_value << std::endl;
 			break;
 		}
 

@@ -81,7 +81,6 @@ namespace util {
 
 					type the_type; /**< The \ref util::parser::base_rule::node::type of the node. */
 					std::string the_value; /**< The value of the node. */
-					std::string the_rule_name; /**< The name of the rule (if this node is of named_rule type. */
 					std::vector<std::shared_ptr<node>> children; /**< The children of the node. */
 
 					/**

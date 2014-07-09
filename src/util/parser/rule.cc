@@ -35,16 +35,14 @@ namespace util {
 	namespace parser {
 		bool rule::test(match_range &context, match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
 			if (!(*the_rule)) throw undefined_rule();
-			if (rule_name == "")
+			if (!get_build_ast() || rule_name == "")
 				return (*the_rule)->match(context, the_match_range, ast_root);
 			else {
 				std::shared_ptr<base_rule::node> child;
 				if ((*the_rule)->match(context, the_match_range, child)) {
-					if (get_build_ast()) {
-						ast_root = std::make_shared<base_rule::node>(base_rule::node::type::named_rule);
-						ast_root->the_rule_name = rule_name;
-						ast_root->children.push_back(child);
-					}
+					ast_root = std::make_shared<base_rule::node>(base_rule::node::type::named_rule);
+					ast_root->the_value = rule_name;
+					ast_root->children.push_back(child);
 					return true;
 				}
 				else return false;
