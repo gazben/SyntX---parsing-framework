@@ -1124,10 +1124,10 @@ This situation is handled similarly in \texttt{repetition\_or\_epsilon::test}, t
 here. The reader is encouraged to have a look at it though.
 
 There is one additional feature of SyntX's AST-building facilities that's worth mentioning. At the beginning
-of this subsection it was stated that AST's represent the grammatical structure of the text and not the
+of this subsection it was stated that ASTs represent the grammatical structure of the text and not the
 internal logic of the text. Fortunately this is not entirely true: the users of the framework can add extra
 nodes to the tree representing their rules. In order to do that, a rule created by the user has to be supplied
-with a name at constuction.
+with a name at construction.
 
 So let's change our little example as follows.
 
@@ -1174,7 +1174,7 @@ The AST generated will now look like this:
 This might not seem very useful in this rather simple example but it becomes very handy when a huge AST based
 on a complex grammar has to be processed.
 
-All it took to achieve to this feature was to give the class \texttt{rule} a new member (\texttt{rule\_name}),
+All it took to achieve this feature was to give the class \texttt{rule} a new member (\texttt{rule\_name}),
 a new constructor that actually sets this name and the \texttt{test} function had to be altered a bit.
 
 \begin{center}
@@ -1203,9 +1203,10 @@ If the rule doesn't have a name (i.e. the \texttt{rule\_name} member is an empty
 requested by the user then the \texttt{test} method merely delegates the context, the match range and root of
 the AST to the inner \texttt{base\_rule} that is wrapped by it. This can be seen in lines~3 and 4. 
 
-On the other hand, if the rule has a name, an extra node has to be inserted. In order to do this, a child node
-is created and fed to the inner rule (lines~6 and 7) and then a new node is created in line~8. It is of type
-\texttt{named\_rule} and its name is stored in \texttt{the\_value} member of the node (line~9).
+On the other hand, if the rule has a name and we are building an AST, an extra node has to be inserted. In
+order to do this, a child node is created and fed to the inner rule (lines~6 and 7) and then a new node is
+created in line~8. It is of type \texttt{named\_rule} and its name is stored in \texttt{the\_value} member of
+the node (line~9).
 
 The child that is created by the inner rule is set as the child of the named rule node in line~10.
 \vfill
