@@ -73,10 +73,15 @@ namespace util {
 						/**
 						 * The node represents a \ref util::parser::repetition_or_epsilon -- its children are the elements of the type that is repeated or a null pointer.
 						 */
-						repetition_or_epsilon};
+						repetition_or_epsilon,
+						/**
+						 * A node representing a named rule.
+						 */
+						named_rule};
 
 					type the_type; /**< The \ref util::parser::base_rule::node::type of the node. */
 					std::string the_value; /**< The value of the node. */
+					std::string the_rule_name; /**< The name of the rule (if this node is of named_rule type. */
 					std::vector<std::shared_ptr<node>> children; /**< The children of the node. */
 
 					/**

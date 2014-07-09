@@ -62,6 +62,7 @@ namespace util {
 
 			private:
 				std::shared_ptr< std::shared_ptr<base_rule> > the_rule; /**< The address of the pointer storing the address of the composite rule referred to by this object. */
+				std::string rule_name; /**< The name of the rule which is used in the AST. */
 
 			public:	
 				/**
@@ -69,6 +70,14 @@ namespace util {
 				 * @param a_rule pointer to the composite rule referred to by this object
 				 */
 				rule(std::shared_ptr<base_rule> a_rule = std::shared_ptr<base_rule>()) : the_rule(new std::shared_ptr<base_rule>(a_rule)) {}
+
+				/**
+				 * Constructs an empty rule with a name.
+				 * @param a_name the name of the rule
+				 */
+				rule(std::string const &a_name) :
+					the_rule(new std::shared_ptr<base_rule>()),
+					rule_name(a_name) {}
 
 				/**
 				 * Sets the address of the composite rule.

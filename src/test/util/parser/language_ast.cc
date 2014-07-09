@@ -67,9 +67,13 @@ void parse_tree(std::shared_ptr<base_rule::node> const &node, bool show_non_valu
 					std::cout << "repetition_or_epsilon";
 				}
 				break;
+
+			case base_rule::node::type::named_rule:
+				std::cout << "named_rule: " << node->the_rule_name;
+				break;
 		}
 
-		if (show_non_value_nodes || node->the_type == base_rule::node::type::value) std::cout << std::endl;
+		if (show_non_value_nodes || node->the_type == base_rule::node::type::value || node->the_type == base_rule::node::type::named_rule) std::cout << std::endl;
 
 		for (auto &a_node: node->children) parse_tree(a_node, show_non_value_nodes, depth + 1);
 	}
@@ -78,7 +82,7 @@ void parse_tree(std::shared_ptr<base_rule::node> const &node, bool show_non_valu
 int main() {
 	base_rule::set_build_ast(true);
 
-	rule program, loop, if_statement, block, condition, expression, addition, addend, definition;
+	rule program, loop("loop"), if_statement, block, condition, expression, addition, addend, definition("definition");
 
 	program <<= +(-loop | -if_statement | -definition);
 

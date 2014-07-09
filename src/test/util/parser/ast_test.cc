@@ -57,6 +57,10 @@ void parse_tree(std::shared_ptr<base_rule::node> const &node, size_t depth = 0) 
 			case base_rule::node::type::repetition_or_epsilon:
 				std::cout << "repetition_or_epsilon" << std::endl;
 			break;
+
+			case base_rule::node::type::named_rule:
+				std::cout << "named_rule: " << node->the_rule_name;
+			break;
 		}
 
 		for (auto &a_node: node->children) parse_tree(a_node, depth + 1);
