@@ -1,7 +1,8 @@
-while variable;
+for (int i = 0; i < 10; ++i) {
+	++apple;
+	lemon++;
+}
 
-while (9 > 3) {
-	if (2 = 3) {
-		2 + 3;
-	}
+for (auto &element: container) {
+	element++;
 }

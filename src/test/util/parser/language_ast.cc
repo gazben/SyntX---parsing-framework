@@ -31,7 +31,8 @@ using namespace util::parser;
 
 void parse_tree(std::shared_ptr<base_rule::node> const &node, bool show_non_value_nodes = false, size_t depth = 0) {
 	if (node) {
-		if (show_non_value_nodes || node->the_type == base_rule::node::type::value) for (size_t i = 0; i < depth; ++i) std::cout << " ";
+		if (show_non_value_nodes || node->the_type == base_rule::node::type::value || node->the_type == base_rule::node::type::named_rule)
+			for (size_t i = 0; i < depth; ++i) std::cout << " ";
 
 		switch (node->the_type) {
 			case base_rule::node::type::value:
@@ -82,21 +83,65 @@ void parse_tree(std::shared_ptr<base_rule::node> const &node, bool show_non_valu
 int main() {
 	base_rule::set_build_ast(true);
 
-	rule program, loop("loop"), if_statement, block, condition, expression, addition, addend, definition("definition");
+	rule program;
+	rule for_loop;
+	rule range_for("range_for");
+	rule iterator_for("iterator_for");
+	rule declaration;
+	rule logic_expression;
+	rule expression;
+	rule block;
 
-	program <<= +(-loop | -if_statement | -definition);
+	program		<<=	-+for_loop
+				<<	-epsilon();
 
-	loop <<= -keyword("while") << -character("(") << -condition << -character(")") << -block;
-	if_statement <<= -keyword("if") << -character("(") << -condition << -character(")") << -block;
-	definition <<= -keyword("while") << -identifier() << -character(";"); //This is to show that the parser and AST can look ahead as needed
+	for_loop	<<=	(
+							-range_for
+						|	-iterator_for
+					)
+				<<	-block;
 
-	block <<= -character("{") << +((-addition << -character(";")) | -loop | -if_statement) << -character("}");
+	range_for	<<=	-keyword("for")
+				<<	-substring("(")
+				<<	-declaration
+				<<	-substring(":")
+				<<	-identifier()
+				<<	-substring(")");
 
-	condition <<= -range('0', '9') << -character("<=>") << -range('0', '9');
+	iterator_for	<<=	-keyword("for")
+					<<	-substring("(")
+					<<	-declaration
+					<<	-substring(";")
+					<<	-logic_expression
+					<<	-substring(";")
+					<<	-expression
+					<<	-substring(")");
 
-	addition <<= -addend << *(-character("+") << -addend);
-	addend <<= -range('0', '9') | -expression;
-	expression <<= -character("(") << -addition << -character(")");
+	declaration		<<=	-(keyword("int") | keyword("char") | keyword("unsigned") | keyword("auto"))
+					<<	-!(
+								substring("&")
+							|	substring("*")
+						  )
+					<<	-identifier()
+					<<	!(
+								-substring("=")
+							<<	-integer()
+						 );
+
+	logic_expression	<<=	-identifier()
+						<<	-(substring("==") | substring("<") | substring(">") | substring("<=") | substring(">="))
+						<<	-integer();
+
+	expression	<<=	-!substring("++")
+				<<	identifier()
+				<<	!substring("++");
+
+	block		<<=	-substring("{")
+				<<	+(
+							-expression
+						<<	-substring(";")
+					 )
+				<<	-substring("}");
 
 	std::string input;
 	if (base_rule::file_to_string("test_data/code_example", input)) {
