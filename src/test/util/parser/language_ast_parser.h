@@ -27,6 +27,8 @@
 
 #include <string>
 #include <memory>
+#include <vector>
+#include <utility>
 #include <iostream>
 
 #include <util/parser/parser.h>
@@ -47,6 +49,7 @@ class language_ast_parser {
 		rule container_name;
 		rule logic_expression;
 		rule expression;
+		rule expression_end;
 		rule preincrement;
 		rule postincrement;
 		rule logic_operator;
@@ -57,7 +60,8 @@ class language_ast_parser {
 	public:
 		language_ast_parser();
 		bool match(std::string const &text, std::string &result, std::shared_ptr<base_rule::node> &ast_root);
-		void traverse_tree(std::shared_ptr<base_rule::node> a_node);
+		static void traverse_tree(std::shared_ptr<base_rule::node> const &a_node, std::vector<std::pair<std::string,std::string>> &the_program);
+		static void print_program(std::ostream &os, std::vector<std::pair<std::string,std::string>> &the_program);
 };
 
 #endif // _LANGUAGE_AST_PARSER_
