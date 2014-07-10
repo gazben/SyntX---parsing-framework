@@ -881,11 +881,12 @@ struct node {
 
 The type of the node can determined using \texttt{the\_type} member which has one of the values of the
 \texttt{type} enumeration. The nodes could be represented by a class hierarchy with one class assigned to each
-operator, one to the named rules and one that would serve as a leaf node. This idea was rejected as the typical
-use case of tree traversal will branch depending on the node type so in case of a class hierarchy a complex
-\texttt{if} structure would appear with \texttt{dynamic\_cast}s which has a larger time cost then switching
-based on an enumeration. In order to make use of polymorphy in case of a class hierarchy, the visitor pattern
-could possibly be used but that would complicate an already complex, recursive tree traversal algorithm.
+operator, one to the named rules and one that would serve as a leaf node. This idea was rejected as the
+typical use case of tree traversal will branch depending on the node type so in case of a class hierarchy a
+complex \texttt{if} structure would appear with \texttt{dynamic\_cast}s which has a larger time cost then
+switching based on an enumeration. In order to make use of polymorphism in case of a class hierarchy, the
+visitor pattern could possibly be used but that would complicate an already complex, recursive tree traversal
+algorithm.
 
 The subtrings matched by the character-level rules are stored in \texttt{the\_value} member.
 
