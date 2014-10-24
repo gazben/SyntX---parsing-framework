@@ -31,37 +31,55 @@
 \usepackage{hfoldsty}			%has to go after \usepackage{lmodern} to take effect
 \usepackage{listings}
 \usepackage{graphicx}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{caption}
+
+\definecolor{darkgray}{RGB}{100,100,100}
+\definecolor{darkblue}{RGB}{0,107,179}
+
+\hypersetup{colorlinks, breaklinks, urlcolor=darkblue, linkcolor=black}
+\captionsetup[figure]{labelfont={bf,it,color=darkgray},textfont={it,color=darkblue}}
 
 \pagestyle{fancy}
 \fancyhf{}
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
-\fancyhf[FL]{\scriptsize{\textit{The SyntX Parser Library (Gergely Nagy)}}}
-\fancyhf[FC]{\scriptsize{\textit{\textbf{\thepage}}}}
-\fancyhf[FR]{\scriptsize{\textit{\today}}}
+\fancyhf[FL]{\scriptsize{\textcolor{darkgray}{\textit{The SyntX Parser Library (Gergely Nagy)}}}}
+\fancyhf[FC]{\scriptsize{\textcolor{darkblue}{\textit{\textbf{\thepage}}}}}
+\fancyhf[FR]{\scriptsize{\textcolor{darkgray}{\textit{\today}}}}
 
 %\lstset{basicstyle=\scriptsize\ttfamily, keywordstyle=\bfseries\ttfamily}
 \lstset{basicstyle=\scriptsize\ttfamily, stringstyle=\ttfamily,
-keywordstyle=\bfseries\ttfamily,aboveskip=10pt,
+keywordstyle=\bfseries\ttfamily\color{darkblue},aboveskip=10pt,
 belowskip=10pt, tabsize=2, xleftmargin=5pt, captionpos=b, 
 literate={á}{{\'a}}1 {é}{{\'e}}1 {ó}{{\'o}}1 {ö}{{\"o}}1 {ú}{{\'u}}1 {ü}{{\"u}}1}
 
-\newcommand{\usec}[2]{\section*{#1}\label{sec:#2}\addcontentsline{toc}{section}{#1}}
-\newcommand{\usubsec}[2]{\subsection*{#1}\label{subsec:#2}\addcontentsline{toc}{subsection}{#1}}
+\newcommand{\usec}[2]{\section*{\textcolor{darkblue}{#1}}\label{sec:#2}\addcontentsline{toc}{section}{#1}}
+\newcommand{\usubsec}[2]{\subsection*{\textcolor{darkblue}{#1}}\label{subsec:#2}\addcontentsline{toc}{subsection}{#1}}
+
+\newcommand{\ufig}[3]{
+	\begin{figure}[h!]
+		\centering
+			\includegraphics[width=#1\textwidth]{#2}
+			\caption{\emph{#3}}
+			\label{fig:#2}
+	\end{figure}
+}
 
 \begin{document}
 \sloppy
 
 \vspace*{2em}
-\centerline{\Huge\textbf{The SyntX Parser Library}}
+\centerline{\textcolor{darkblue}{\Huge\textbf{The SyntX Parser Library}}}
 \vspace{5em}
 
 \begin{center}
 	\begin{minipage}[h]{0.85\linewidth}
-		\itshape
+		\itshape\textcolor{darkgray}{
 		The SyntX parser library is a set of C++ classes that enables users to create a parser for an LL(k)
 		grammar by giving the production rules with an EBNF-like notation in the form of C++ expressions.
 		There is thus no need for a precompiler, the parser can be an integral part of a C++ project.
+		}
 	\end{minipage}
 \end{center}
 
@@ -300,7 +318,7 @@ has to pay attention to if the parser is handwritten.
 All the example functions shown up to here did was to tell whether their input complied to their requirements
 or not. If the task of the parser is merely to determine if a text conforms to a specific grammar then this is
 sufficient. Otherwise the functions should perform operations to yield a result of the parsing. This can be in
-the form of an AST (abstract syntax tree) or pratically any data that can be generated based on the input.
+the form of an AST (abstract syntax tree) or practically any data that can be generated based on the input.
 
 When the parsing functions are handwritten the actions to be performed when a match is found can be put inside
 the parsing function resulting in a code where parsing and data processing is intertwined. For simple problems
@@ -359,7 +377,7 @@ contains the semantic action assigned to a rule and performs the basic administr
 matching process. The exact instructions regarding the matching have to go in a virtual function defined as
 pure virtual in this class (\texttt{test}).
 
-One of the data types define in \texttt{base\_rule} has already been mentioned on page
+One of the data types defined in \texttt{base\_rule} has already been mentioned on page
 \pageref{lst:matchrange}, it is the \texttt{match\_range} which is used for two purposes: it defines the
 limits between which the parsing is done and also the range matched by a given rule.
 
@@ -662,7 +680,7 @@ Now the grammar on page \pageref{lst:numberedexpressiongrammar} doesn't cause an
 rules referred to in the definition of a rule shall be stored as \texttt{rule}s. But how can an operator
 decide which rule is terminal and which is non-terminal? Well it doesn't have to: every operator will create
 \texttt{rule} objects and it simply solves the problem. This might seem wasteful as constructing a
-\texttt{rule} implies the dynamic allocaton of a \texttt{shared\_ptr}. Considering the fact though that every
+\texttt{rule} implies the dynamic allocation of a \texttt{shared\_ptr}. Considering the fact though that every
 rule is copied many times and that the copy constructor of a \texttt{rule} is trivial, as the only data member
 it has is a \texttt{shared\_ptr}, this method is feasible.
 
@@ -712,10 +730,10 @@ quite often, an operator was assigned a function that didn't even resemble the o
 on ints.
 
 Another problem is that there is no operator in EBNF for concatenation. If the name of two rules are written
-after one another then it means that the first has to follow the second. This is something that cannot be done
-in C++, there has to be an operator between every two operands. This is an example for an operator that was
-defined randomly. In this case the shift left operator was used (\verb!<<!) as it is already used for a
-similar purpose in STL. For the sake of consistency, the operator \verb!<<=! was used as the assignment
+after one another then it means that the first has to be followed by the second. This is something that cannot
+be done in C++, there has to be an operator between every two operands. This is an example for an operator
+that was defined randomly. In this case the shift left operator was used (\verb!<<!) as it is already used for
+a similar purpose in STL. For the sake of consistency, the operator \verb!<<=! was used as the assignment
 operator.
 
 The following table summarizes the operators of the SyntX framework.
@@ -723,7 +741,7 @@ The following table summarizes the operators of the SyntX framework.
 \begin{table}[h]
 	\begin{center}
 		\begin{tabular}{cp{22em}}
-			\textbf{Operator} & \textbf{Meaning} \\
+			\textcolor{darkblue}{\textbf{Operator}} & \textcolor{darkblue}{\textbf{Meaning}} \\
 			\hline\\
 			\vspace{0.3em}
 			\verb!|! & alternation\\
@@ -752,7 +770,7 @@ The following table summarizes the built-in rules (terminal symbols) in the fram
 \begin{table}[h]
 	\begin{center}
 		\begin{tabular}{cp{22em}}
-			\textbf{Built-in rule} & \textbf{Consumes} \\
+			\textcolor{darkblue}{\textbf{Built-in rule}} & \textcolor{darkblue}{\textbf{Consumes}} \\
 			\hline\\
 			\vspace{0.3em}
 			\texttt{character} & one character if it is in a given set\\
@@ -811,7 +829,7 @@ When a grammar becomes complex this task becomes very exhausting especially when
 subrule (a rule that is a part of another rule) matching some part of the text doesn't mean that the rule that
 contains the subrule will match as well. So an action that is performed when a certain rule matches might have
 to be undone when it turns out that parsing went the wrong way. This problem was discussed in the subsection
-on action starting on page \pageref{subsec:actions}.
+on actions starting on page \pageref{subsec:actions}.
 
 Another frequent situation is that a text has to be parsed several times to gather all the information needed
 to fully understand and process the information represented by the text. These cases cannot be handled with
@@ -850,12 +868,13 @@ and our input is:
 
 then the tree generated is the following:
 
-\begin{figure}[h!]
-	\centering
-		\includegraphics[width=0.5\textwidth]{ast}
-		\caption{\emph{The Abstract Syntax Tree of the expression: 2 + 3 + 4}}
-		\label{fig:ast}
-\end{figure}
+%\begin{figure}[h!]
+%	\centering
+%		\includegraphics[width=0.5\textwidth]{ast}
+%		\caption{\emph{The Abstract Syntax Tree of the expression: 2 + 3 + 4}}
+%		\label{fig:ast}
+%\end{figure}
+\ufig{0.5}{ast}{The Abstract Syntax Tree of the expression: 2 + 3 + 4}
 
 Naturally, the node representing a \texttt{repetition} may have an unlimited number of children while
 \texttt{concatenation} always has two.
@@ -885,8 +904,9 @@ operator, one to the named rules and one that would serve as a leaf node. This i
 typical use case of tree traversal will branch depending on the node type so in case of a class hierarchy a
 complex \texttt{if} structure would appear with \texttt{dynamic\_cast}s which has a larger time cost then
 switching based on an enumeration. In order to make use of polymorphism in case of a class hierarchy, the
-visitor pattern could possibly be used but that would complicate an already complex, recursive tree traversal
-algorithm.
+visitor
+pattern\footnote{\href{http://en.wikipedia.org/wiki/Visitor_pattern}{en.wikipedia.org/wiki/Visitor\_pattern}}
+could possibly be used but that would complicate an already complex, recursive tree traversal algorithm.
 
 The subtrings matched by the character-level rules are stored in \texttt{the\_value} member.
 
@@ -1006,9 +1026,9 @@ otherwise time and memory is not wasted on it.
 
 The \texttt{get\_build\_ast()} call reads the value of the static \texttt{build\_ast} variable.
 
-The value of the node is set by creating a \texttt{std::string} object using the \texttt{const\_iterator}s
-of \texttt{the\_match\_range}. No children are set which results in two null pointers showing that this node
-is a leaf.
+The value of the node is set by creating a \texttt{std::string} object using the \texttt{const\_iterator}s of
+\texttt{the\_match\_range}. No children are set which leaves the \texttt{children} container empty showing
+that this node is a leaf.
 
 \begin{center}
 	\begin{minipage}[ht]{0.95\textwidth}
@@ -1079,7 +1099,7 @@ little use to the user. This node will tell the traversing algorithm the type of
 current position instead. It is \texttt{type::concatenation} in this case.
 
 The children of this node are the two nodes (or subtrees) that are created by the \texttt{match} calls of the
-inner rules of \texttt{concatenation} in line~6. They are added to the node in the lines~13 and 14.
+inner rules of \texttt{concatenation} in line~6. They are added to the node in lines~13 and 14.
 
 Finally the code of \texttt{repetition::test} is also listed here to show how an unlimited number of children
 can be handled.
@@ -1165,12 +1185,13 @@ line~4.
 
 The AST generated will now look like this:
 
-\begin{figure}[h!]
-	\centering
-		\includegraphics[width=0.7\textwidth]{ast_named_rule}
-		\caption{\emph{The Abstract Syntax Tree of an expression with a named rule (addend)}}
-		\label{fig:ast}
-\end{figure}
+%\begin{figure}[h!]
+%	\centering
+%		\includegraphics[width=0.7\textwidth]{ast_named_rule}
+%		\caption{\emph{The Abstract Syntax Tree of an expression with a named rule (addend)}}
+%		\label{fig:ast}
+%\end{figure}
+\ufig{0.7}{ast_named_rule}{The Abstract Syntax Tree of an expression with a named rule (addend)}
 
 This might not seem very useful in this rather simple example but it becomes very handy when a huge AST based
 on a complex grammar has to be processed.
@@ -1226,10 +1247,12 @@ testing whether a named rule is really there. This would be very cumbersome.
 \vfill
 \vfill
 \vfill
-\hfill\begin{minipage}[h]{0.3\textwidth}
+\hfill\begin{minipage}[h]{0.4\textwidth}
 \begin{center}
-	\textit{Gergely Nagy}\\
-	\textit{Budapest, \today}
+	\itshape\textcolor{darkgray}{
+		Gergely Nagy\\
+		Budapest, \today
+	}
 \end{center}
 \end{minipage}
 \vfill
@@ -1239,7 +1262,7 @@ testing whether a named rule is really there. This would be very cumbersome.
 \vfill
 \vfill
 \begin{center}
-\footnotesize\emph{Please consider the environment before printing this document.}
+\textcolor{darkblue}{\footnotesize\emph{Please consider the environment before printing this document.}}
 \end{center}
 \vfill
 \end{document}
