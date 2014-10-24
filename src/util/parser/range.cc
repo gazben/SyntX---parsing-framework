@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+#include <tuple>
+#include <sstream>
+
 #include <util/parser/range.h>
 
 namespace util {
@@ -44,6 +47,12 @@ namespace util {
 			}
 
 			return false;
+		}
+
+		void range::insert_failure_entry(std::string::const_iterator const &position) const {
+			std::stringstream stream;
+			stream << "a character from the range [" << range_first << ", " << range_last << "]";  
+			failure_log.insert(std::make_tuple(position, stream.str()));	
 		}
 	}
 }

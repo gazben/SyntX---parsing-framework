@@ -25,10 +25,13 @@
 #ifndef _UTIL_PARSER_BASERULE_
 #define _UTIL_PARSER_BASERULE_
 
+#include <set>
+#include <tuple>
 #include <string>
 #include <memory>
 #include <vector>
 #include <utility>
+#include <exception>
 #include <functional>
 
 namespace util {
@@ -94,6 +97,23 @@ namespace util {
 					 * @param a_type the type of the node
 					 */
 					node(type a_type) :	the_type(a_type) {}
+				};
+
+				/**
+				 * Exception thrown when \ref base_rule::get_failure_cause is called on an empty failure log.
+				 */
+				class empty_failure_log : public std::exception {
+					public:
+						/**
+						 * Destructor.
+						 */
+						~empty_failure_log() noexcept {}
+
+						/**
+						 * Yields the error message of the exception.
+						 * @return the error message of the exception.
+						 */
+						char const *what() const noexcept;
 				};
 
 			private:
@@ -165,8 +185,34 @@ namespace util {
 				 */
 				static bool get_build_ast() {return build_ast;}
 
+				/**
+				 * Returns the failure log entry of the rule that reached farthest in the text.
+				 * @return the failure log entry of the rule that reached farthest in the text
+				 * @throw base_rule::empty_failure_log if the failure_log is empty
+				 */
+				static std::tuple<std::string::const_iterator, std::string> const &get_failure_cause();
+
+				/**
+				 * Generates an error message based on the failure log.
+				 * @param context the bounds of the parsed text
+				 * @note The parameter is needed as the bounds of the text
+				 * are lost during the parsing process.
+				 * @return an error message based on the failure log
+				 */
+				static std::string get_error_message(match_range const &context);
+
+			protected:
+				/**
+				 * Rules corresponding to terminal symbols enter data in the failure log if they fail to match.
+				 * Only the terminal rules need to act so it is defined as an empty method so as not to
+				 * litter the code of other rules.
+				 * @param position the position where the rule failed
+				 */
+				virtual void insert_failure_entry(std::string::const_iterator const &position) const {}
+
 			protected:
 				static std::shared_ptr<node> dont_build_ast; /**< The default value of AST root (used when the tree is not built). */
+				static std::set<std::tuple<std::string::const_iterator, std::string>> failure_log; /**< The log where terminal symbols enter data when they fail.*/
 		};
 	}
 }

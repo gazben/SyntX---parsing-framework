@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+#include <tuple>
+#include <sstream>
+
 #include <util/parser/range.h>
 #include <util/parser/character.h>
 #include <util/parser/identifier.h>
@@ -55,6 +58,12 @@ namespace util {
 				return false;
 			}
 
+		}
+
+		void identifier::insert_failure_entry(std::string::const_iterator const &position) const {
+			std::stringstream stream;
+			stream << "an identifier containing the following extra characters: {" << extra_characters << "}";
+			failure_log.insert(std::make_tuple(position, stream.str()));	
 		}
 	}
 }

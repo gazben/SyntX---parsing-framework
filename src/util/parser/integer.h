@@ -68,6 +68,12 @@ namespace util {
 				virtual std::shared_ptr<base_rule> clone() const override {
 					return std::shared_ptr<base_rule>(new integer(*this));
 				}
+
+			protected:
+				/**
+				 * @copydoc util::parser::base_rule::insert_failure_entry
+				 */
+				virtual void insert_failure_entry(std::string::const_iterator const &position) const override;
 		};
 	}
 }

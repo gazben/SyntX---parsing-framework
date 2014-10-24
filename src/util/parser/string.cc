@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+#include <tuple>
+#include <sstream>
+
 #include <util/parser/string.h>
 
 namespace util {
@@ -50,6 +53,12 @@ namespace util {
 				return true;
 			}
 			else return false;
+		}
+
+		void string::insert_failure_entry(std::string::const_iterator const &position) const {
+			std::stringstream stream;
+			stream << "a string";
+			failure_log.insert(std::make_tuple(position, stream.str()));	
 		}
 	}
 }

@@ -48,7 +48,6 @@
 \fancyhf[FC]{\scriptsize{\textcolor{darkblue}{\textit{\textbf{\thepage}}}}}
 \fancyhf[FR]{\scriptsize{\textcolor{darkgray}{\textit{\today}}}}
 
-%\lstset{basicstyle=\scriptsize\ttfamily, keywordstyle=\bfseries\ttfamily}
 \lstset{basicstyle=\scriptsize\ttfamily, stringstyle=\ttfamily,
 keywordstyle=\bfseries\ttfamily\color{darkblue},aboveskip=10pt,
 belowskip=10pt, tabsize=2, xleftmargin=5pt, captionpos=b, 
@@ -868,12 +867,6 @@ and our input is:
 
 then the tree generated is the following:
 
-%\begin{figure}[h!]
-%	\centering
-%		\includegraphics[width=0.5\textwidth]{ast}
-%		\caption{\emph{The Abstract Syntax Tree of the expression: 2 + 3 + 4}}
-%		\label{fig:ast}
-%\end{figure}
 \ufig{0.5}{ast}{The Abstract Syntax Tree of the expression: 2 + 3 + 4}
 
 Naturally, the node representing a \texttt{repetition} may have an unlimited number of children while
@@ -1185,12 +1178,6 @@ line~4.
 
 The AST generated will now look like this:
 
-%\begin{figure}[h!]
-%	\centering
-%		\includegraphics[width=0.7\textwidth]{ast_named_rule}
-%		\caption{\emph{The Abstract Syntax Tree of an expression with a named rule (addend)}}
-%		\label{fig:ast}
-%\end{figure}
 \ufig{0.7}{ast_named_rule}{The Abstract Syntax Tree of an expression with a named rule (addend)}
 
 This might not seem very useful in this rather simple example but it becomes very handy when a huge AST based

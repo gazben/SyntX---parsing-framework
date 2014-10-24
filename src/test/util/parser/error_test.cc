@@ -22,42 +22,29 @@
  * THE SOFTWARE.
  */
 
-#ifndef _UTIL_PARSER_REAL_
-#define _UTIL_PARSER_REAL_
-
-#include <memory>
+#include <tuple>
 #include <string>
+#include <iostream>
 
-#include <util/parser/base_rule.h>
+#include <util/parser/parser.h>
 
-namespace util {
-	namespace parser {
-		/**
-		 * Rule that matches a real number.
-		 */
-		class real : public base_rule {
-			public:
+using namespace util::parser;
 
-				/**
-				 * @copydoc util::parser::base_rule::test
-				 */
-				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
+int main() {
+	rule addition, addend, expression;
 
-				/**
-				 * @copydoc util::parser::base_rule::clone
-				 */
-				virtual std::shared_ptr<base_rule> clone() const override {
-					return std::shared_ptr<base_rule>(new real(*this));
-				}
+	addition <<= addend << +(character("+") << addend);
+	addend <<= range('0', '9') | expression;
+	expression <<= character("(") << addition << character(")");
 
-			protected:
-				/**
-				 * @copydoc util::parser::base_rule::insert_failure_entry
-				 */
-				virtual void insert_failure_entry(std::string::const_iterator const &position) const override;
-		};
+	std::string input = "2+(3-4)";
+	base_rule::match_range context(input.cbegin(), input.cend());
+	base_rule::match_range result;
+
+	if (addition.match(context, result))
+		std::cout << "Matched: " << std::string(result.first, result.second) << std::endl;
+	else {
+		std::cout << base_rule::get_error_message(base_rule::match_range(input.cbegin(), input.cend())) << std::endl;
 	}
 }
-
-#endif //_UTIL_PARSER_REAL_
 

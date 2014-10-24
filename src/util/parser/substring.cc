@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+#include <tuple>
+#include <memory>
+
 #include <util/parser/range.h>
 #include <util/parser/character.h>
 #include <util/parser/substring.h>
@@ -49,6 +52,12 @@ namespace util {
 				return true;
 			}
 			else return false;
+		}
+
+		void substring::insert_failure_entry(std::string::const_iterator const &position) const {
+			std::stringstream stream;
+			stream << "the substring: " << the_word; 
+			failure_log.insert(std::make_tuple(position, stream.str()));	
 		}
 	}
 }

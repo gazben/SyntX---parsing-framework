@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+#include <tuple>
+#include <sstream>
+
 #include <util/parser/character.h>
 #include <util/parser/range.h>
 #include <util/parser/integer.h>
@@ -67,6 +70,12 @@ namespace util {
 			else {
 				return false;
 			}
+		}
+
+		void real::insert_failure_entry(std::string::const_iterator const &position) const {
+			std::stringstream stream;
+			stream << "a real number"; 
+			failure_log.insert(std::make_tuple(position, stream.str()));	
 		}
 	}
 }

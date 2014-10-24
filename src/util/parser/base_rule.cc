@@ -23,6 +23,7 @@
  */
 
 #include <fstream>
+#include <sstream>
 #include <iterator>
 #include <algorithm>
 
@@ -32,6 +33,7 @@ namespace util {
 	namespace parser {
 		std::shared_ptr<base_rule::node> base_rule::dont_build_ast;
 		bool base_rule::build_ast = false;
+		std::set<std::tuple<std::string::const_iterator, std::string>> base_rule::failure_log;
 
 		bool base_rule::match(match_range &context, match_range &the_match_range, std::shared_ptr<node> &ast_root) {
 			match_range a_range;
@@ -46,7 +48,10 @@ namespace util {
 
 				return true;
 			}
-			else return false;
+			else {
+				insert_failure_entry(context.first);
+				return false;
+			}
 		}
 
 		base_rule &base_rule::operator[](semantic_action const &a_semantic_action) {
@@ -77,5 +82,39 @@ namespace util {
 
 			return true;
 		}
+		
+		char const *base_rule::empty_failure_log::what() const noexcept {
+			return "The failure log is empty.";
+		}
+
+		std::string base_rule::get_error_message(match_range const &context) {
+			if (failure_log.empty()) return "";
+
+			auto error_entry = get_failure_cause();	
+			
+			size_t characters_before = 0;
+			std::string::const_iterator i_before = std::get<0>(error_entry);
+			std::string::const_iterator i_after = std::get<0>(error_entry);
+
+			while (i_before > context.first && *i_before != '\n') {++characters_before; --i_before;}
+			while (i_after < context.second && *i_after != '\n') ++i_after;
+
+			std::stringstream message;
+
+			message << "An error occured here:" << std::endl;
+			message << std::string(i_before, i_after) << std::endl;
+
+			for (size_t i = 0; i < characters_before; ++i) message << " ";
+
+			message << "^" << std::endl << "The parser was expecting " << std::get<1>(error_entry);
+
+			return message.str();
+		}
+		
+		std::tuple<std::string::const_iterator, std::string> const &base_rule::get_failure_cause() {
+			if (failure_log.empty()) throw empty_failure_log();
+			return *failure_log.crbegin();
+		}
+
 	}
 }

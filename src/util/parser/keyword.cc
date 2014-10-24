@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+#include <tuple>
+#include <sstream>
+
 #include <util/parser/range.h>
 #include <util/parser/character.h>
 #include <util/parser/keyword.h>
@@ -60,6 +63,12 @@ namespace util {
 				return true;
 			}
 			else return false;
+		}
+
+		void keyword::insert_failure_entry(std::string::const_iterator const &position) const {
+			std::stringstream stream;
+			stream << "the keyword: " << the_word; 
+			failure_log.insert(std::make_tuple(position, stream.str()));	
 		}
 	}
 }

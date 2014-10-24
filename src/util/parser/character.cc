@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+#include <tuple>
+#include <sstream>
+
 #include <util/parser/character.h>
 
 namespace util {
@@ -46,6 +49,12 @@ namespace util {
 			}
 
 			return false;
+		}
+		
+		void character::insert_failure_entry(std::string::const_iterator const &position) const {
+			std::stringstream stream;
+			stream << "a character from the set: {" << allowed_characters << "}";
+			failure_log.insert(std::make_tuple(position, stream.str()));	
 		}
 	}
 }

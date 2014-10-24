@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+#include <tuple>
+#include <sstream>
+
 #include <util/parser/integer.h>
 #include <util/parser/range.h>
 #include <util/parser/character.h>
@@ -62,6 +65,12 @@ namespace util {
 			}
 
 			return false;
+		}
+
+		void integer::insert_failure_entry(std::string::const_iterator const &position) const {
+			std::stringstream stream;
+			stream << (the_integer_type == type::signed_int ? "a signed" : "an unsigned") << " integer";
+			failure_log.insert(std::make_tuple(position, stream.str()));	
 		}
 	}
 }
