@@ -98,6 +98,8 @@ namespace util {
 			std::string::const_iterator i_after = std::get<0>(error_entry);
 
 			while (i_before > context.first && *i_before != '\n') {++characters_before; --i_before;}
+			if (*i_before == '\n') ++i_before;
+
 			while (i_after < context.second && *i_after != '\n') ++i_after;
 
 			std::stringstream message;
