@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 
+#include <cctype>
 #include <fstream>
 #include <sstream>
 #include <iterator>
@@ -104,7 +105,11 @@ namespace util {
 			message << "An error occured here:" << std::endl;
 			message << std::string(i_before, i_after) << std::endl;
 
-			for (size_t i = 0; i < characters_before; ++i) message << " ";
+			for (size_t i = 0; i < characters_before; ++i) {
+				char current = i_before[i];
+				if (std::isspace(current) && current != '\n') message << current;
+				else message << " ";
+			}
 
 			message << "^" << std::endl << "The parser was expecting " << std::get<1>(error_entry);
 

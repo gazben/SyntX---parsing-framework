@@ -30,12 +30,12 @@
 
 using namespace util::parser;
 
-int main() {
+void simple_test() {
 	rule addition, addend, expression;
 
-	addition <<= addend << +(character("+") << addend);
-	addend <<= range('0', '9') | expression;
-	expression <<= character("(") << addition << character(")");
+	addition <<= -addend << +(-character("+") << -addend);
+	addend <<= -range('0', '9') | -expression;
+	expression <<= -character("(") << -addition << -character(")");
 
 	std::string input = "2+(3-4)";
 	base_rule::match_range context(input.cbegin(), input.cend());
@@ -48,3 +48,102 @@ int main() {
 	}
 }
 
+void complex_test() {
+	rule program;
+	rule for_loop;
+	rule range_for("range_for");
+	rule iterator_for("iterator_for");
+	rule declaration;
+	rule logic_expression;
+	rule expression;
+	rule sentence;
+	rule block;
+
+	program		<<=	-+for_loop
+				<<	-epsilon();
+
+	for_loop	<<=	(
+							-range_for
+						|	-iterator_for
+					)
+				<<	-block;
+
+	range_for	<<=	-keyword("for")
+				<<	-substring("(")
+				<<	-declaration
+				<<	-substring(":")
+				<<	-identifier()
+				<<	-substring(")");
+
+	iterator_for	<<=	-keyword("for")
+					<<	-substring("(")
+					<<	-declaration
+					<<	-substring(";")
+					<<	-logic_expression
+					<<	-substring(";")
+					<<	-expression
+					<<	-substring(")");
+
+	declaration		<<=	-(keyword("int") | keyword("char") | keyword("unsigned") | keyword("auto"))
+					<<	-!(
+								substring("&")
+							|	substring("*")
+						  )
+					<<	-identifier()
+					<<	!(
+								-substring("=")
+							<<	-integer()
+						 );
+
+	logic_expression	<<=	-identifier()
+						<<	-(substring("==") | substring("<") | substring(">") | substring("<=") | substring(">="))
+						<<	-integer();
+
+	expression	<<=	-!substring("++")
+				<<	identifier()
+				<<	!substring("++");
+
+	sentence	<<=	-expression
+				<<	-substring(";");
+
+	block		<<=	-substring("{")
+				<<	+(
+							-sentence 
+						|	-for_loop
+					 )
+				<<	-substring("}");
+	
+	std::string input = R"(
+		for (int i = 0; i < 10; ++i) {
+			++apple;
+			lemon++;
+		}
+
+		for (auto &element: container) {
+			element++;
+		}
+
+		for (int i = 5; i > 15; ++i) {
+			+apple;
+			for (auto e: container) {
+				++lemon;
+			}
+		}
+	)";
+
+	base_rule::match_range context(input.cbegin(), input.cend());
+	base_rule::match_range result;
+
+	if (program.match(context, result) && context.first == context.second) {
+		std::cout << "Matched: " << std::string(result.first, result.second) << std::endl;
+	}
+	else {
+		std::cout << base_rule::get_error_message(base_rule::match_range(input.cbegin(), input.cend())) << std::endl;
+	}
+}
+
+int main() {
+	void (*tests[])() = {simple_test, complex_test};
+
+	for (auto test: tests) test();
+}
