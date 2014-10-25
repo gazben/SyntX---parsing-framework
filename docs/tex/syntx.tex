@@ -394,8 +394,9 @@ One action can be assigned to a rule and it's stored in the \texttt{the\_semanti
 class.
 
 The \texttt{match} method handles the tasks associated with matching\footnote{This is not the actual code of
-the function -- the parts concerning the automatic AST generation are discussed on page \pageref{subsec:ast}.
-This is true for the coming examples as well.}.
+the function -- the parts concerning the automatic AST generation are discussed on page \pageref{subsec:ast}
+and error message handling is discussed on page \pageref{subsec:error}. This is true for the coming examples
+as well.}.
 
 \begin{center}
 	\begin{minipage}[h]{0.8\textwidth}
@@ -819,6 +820,45 @@ else
 	\end{minipage}
 \end{center}
 
+It should be noted that simply relying on the return value of \texttt{match} can be misleading. If a grammar
+is a series of recurring elements at the top level (e.g. a C code is basically a series of functions) then it
+might return true for a text that contain errors.
+
+Let us assume that a very simplistic approach to the grammar of the C language contains the following starting
+rule:
+\begin{center}
+	\begin{minipage}[h]{0.4\textwidth}
+		\begin{lstlisting}[language=c++]
+program <<= *-function;
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+If there is a syntax error in the third function of a code, the \texttt{function} rule will not match that
+function. This will stop the parsing, but as the first two functions matched, the repetition operator will
+return true and so will the \texttt{program} rule as it has no way to know that it is the starting rule of the
+grammar.
+
+This problem can be solved by improving the test condition of matching:
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+if (addition.match(context, result) && context.first == context.second)
+	std::cout << "Matched: " << std::string(result.first, result.second);
+else
+	std::cout << "Didn't match";
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+The first line contains an extra condition: the two fields of the \texttt{context} has to be equal. The second
+field always points to the end of the text while the first starts from the beginning and is increased
+continuously as the text is parsed. We have a full match when the first member reaches the last: the text is
+parsed to the last character.
+
+Another way to check for a full match would be to compare the bounds of the parsed text with \texttt{result}
+-- they have to be equal.
+
 \usubsec{Automatic AST generation}{ast}
 The processing of texts based on a simple grammar can be done on the fly, i.e. appropriate semantic actions
 (defined in e.g. lambdas) can be added to the rules. Examples showing how this can be done are shipped with
@@ -1231,6 +1271,112 @@ If this check was omitted, a \texttt{named\_rule} node would be inserted in the 
 could mislead the processing algorithm or simply make it necessary to add an extra conditional statement
 testing whether a named rule is really there. This would be very cumbersome.
 
+\usubsec{Error message handling}{error}
+When the text being parsed is fully conforming to the grammar then it is very easy and comfortable to work
+with using the library as described above. Probems arise when there are syntactic errors as all the
+\texttt{match} method tells us about the success of the matching is a boolean value. Without further help the
+entire text needs to be parsed by the user of the framework in case of errors which can be a very hard task
+and thus parsing libraries are expected to be of a little more help.
+
+Finding the position of the syntactic error is not so easy though. The problem is that there are always rules
+that fail to match during parsing even when the text is perfect. This is because alternations can be defined.
+If a grammar accepts "apple" or "pear" at a point, then one of these fruits will always fail. So simply
+reporting a failing rule is not a correct solution to this problem.
+
+Another difficulty is rooted in the nature of the parsing algorithm: it is recursive so it may be at a
+position very deep down the call stack when it finds a misspelling. Reporting an error from down there by
+passing the message up the stack is very cumbersome.
+
+Yet another aspect of the problem is to determine the type of rules that should report. If a high-level rule
+(a so called \emph{non-terminal}) rule reported an error, it could position the place of the flaw long before
+it actually occurs. Just think of a concatenation of several symbols failing at the last one. As the entire
+concatenation fails in this case, it would report the position of the error for its first element. 
+
+It is very hard to find the ultimate solution to this problem. Even the best compilers give ambiguous error
+messages sometimes. Heuristic methods are used and they are constantly improved.
+
+The SyntX library takes a very simplistic but generally fairly correct approach. The \texttt{base\_rule} class
+has a static member called \texttt{failure\_log} that contains tuples consisting of two members: an iterator
+pointing to a position where the parsing failed and a string that says what was expected at that point.
+
+Terminal rules can report errors in this container. Whenever a rule that operates at the character level
+fails, it adds an entry to it telling its current position and describing what it was looking for. The
+\texttt{insert\_failure\_entry} method is used to do this which is a virtual method in \texttt{base\_rule}. It
+is not pure virtual as every rule inherits it, but only the terminals will act, the rest leave it empty.
+
+This method is called by \texttt{base\_rule::match} as it is that method that knows whether the matching of a
+rule was successful or not and also the current position of the parsing. The latter has to be passed to
+\texttt{insert\_failure\_entry}. Thus the \texttt{match} method amended with error message handling looks
+like this:
+
+\begin{center}
+	\begin{minipage}[ht]{0.9\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+bool base_rule::match(match_range &context, match_range &the_match_range, std::shared_ptr<node> &ast_root) {
+	match_range a_range;
+
+	if (test(context, a_range, ast_root)) {
+		the_match_range = a_range;
+
+		if (the_semantic_action) {
+			std::string the_matched_substring(the_match_range.first, the_match_range.second);
+			the_semantic_action(the_matched_substring);
+		}
+
+		return true;
+	}
+	else {
+		insert_failure_entry(context.first);
+		return false;
+	}
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+The only difference to the previously seen version of the method is in line~15, where
+\texttt{insert\_failure\_entry} is called with the first field of the \texttt{context} pair containing the
+current parsing position.
+
+Next, let us investigate an example of the logging method:
+\begin{center}
+	\begin{minipage}[ht]{0.9\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+void character::insert_failure_entry(std::string::const_iterator const &position) const {
+	std::stringstream stream;
+	stream << "a character from the set: {" << allowed_characters << "}";
+	failure_log.insert(std::make_tuple(position, stream.str()));	
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+It simply passes the received position to the failure log together with a string that describes what the rule
+is looking for. This string can be a part of the following sentence: "The parser was looking for ...".
+
+The \texttt{failure\_log} will contain elements after almost every parsing run regardless of its success. As
+mentioned above, every alternation will result in failures that appear in the log. Here comes the heuristics:
+the log entry that is most likely to be the root cause of a failure has to be found when the parsing fails.
+
+The SyntX library chooses the entry that is farthest from the beginning of the text. In most cases the
+processed text is mostly correct, so it is very likely that the parsing route that reaches deepest into it is
+the interpretation that the author intended.
+
+There are two ways to get hold of the information regarding errors in SyntX:
+\texttt{base\_rule::get\_failure\_cause} returns the element of \texttt{failure\_log} with the largest string
+iterator and lets the user create an error message using the information in the entry,
+\texttt{base\_rule::get\_error\_message} returns a string that contains the text in the \texttt{failure\_log}
+entry plus the part of the text that contained the error, the position of which is shown with a \texttt{\^}
+symbol:
+\begin{center}
+	\begin{minipage}[ht]{0.6\textwidth}
+		\begin{lstlisting}[breaklines=true]
+An error occured here:
+			+apple;
+			 ^
+The parser was expecting the substring: ++
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
 \vfill
 \vfill
 \vfill
@@ -1245,6 +1391,7 @@ testing whether a named rule is really there. This would be very cumbersome.
 \vfill
 
 \newpage \tableofcontents
+\addcontentsline{toc}{section}{Contents}
 
 \vfill
 \vfill
