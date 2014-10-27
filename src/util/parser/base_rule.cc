@@ -98,13 +98,23 @@ namespace util {
 			std::string::const_iterator i_after = std::get<0>(error_entry);
 
 			while (i_before > context.first && *i_before != '\n') {++characters_before; --i_before;}
-			if (*i_before == '\n') ++i_before;
+
+			size_t line_number = 1;
+			if (*i_before == '\n') {
+				std::string::const_iterator line_iterator = i_before;
+				while (line_iterator > context.first) {
+					if (*line_iterator == '\n') ++line_number;
+					--line_iterator;
+				}
+
+				++i_before; //so i_before points to the first character of the line with the error
+			}
 
 			while (i_after < context.second && *i_after != '\n') ++i_after;
 
 			std::stringstream message;
 
-			message << "An error occured here:" << std::endl;
+			message << "An error occured here (line " << line_number <<  "):" << std::endl;
 			message << std::string(i_before, i_after) << std::endl;
 
 			for (size_t i = 0; i < characters_before; ++i) {
