@@ -259,7 +259,10 @@ bool test_11() {
 
 	if (!base_rule::file_to_string("test_data/test3.tt", contents)) return false;
 
-	numbers <<= *-(integer()[([](std::string const &s){std::cout << s << std::endl;})]);
+					//letters[ ([](std::string const &s) {std::cout << s << std::endl;}) ] << 
+	numbers <<= *-integer()[
+								([](std::string const &s){std::cout << s << std::endl;})
+							];
 
 	base_rule::match_range a_range;
 	base_rule::match_range i(contents.begin(), contents.end());
@@ -324,7 +327,10 @@ bool test_12() {
 		std::cout << numbers.top() << std::endl; numbers.pop();
 		return true;
 	}
-	else return false;
+	else {
+		std::cout << base_rule::get_error_message(base_rule::match_range(expression.begin(), expression.end())) << std::endl;
+		return false;
+	}
 }
 
 bool test_13() {
@@ -535,7 +541,7 @@ bool test_23() {
 int main() {
 	util::tester::tester the_tester(__FILE__);
 
-	/*
+	//*
 	the_tester.add(test_0);
 	the_tester.add(test_1);
 	the_tester.add(test_2);
@@ -559,8 +565,8 @@ int main() {
 	the_tester.add(test_20);
 	the_tester.add(test_21);
 	the_tester.add(test_22);
-	*/
 	the_tester.add(test_23);
+	// */
 
 	return the_tester.run();
 }

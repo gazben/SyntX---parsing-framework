@@ -1357,7 +1357,7 @@ mentioned above, every alternation will result in failures that appear in the lo
 the log entry that is most likely to be the root cause of a failure has to be found when the parsing fails.
 
 The SyntX library chooses the entry that is farthest from the beginning of the text. In most cases the
-processed text is mostly correct, so it is very likely that the parsing route that reaches deepest into it is
+processed text is almost correct, so it is very likely that the parsing route that reaches deepest into it is
 the interpretation that the author intended.
 
 There are two ways to get hold of the information regarding errors in SyntX:
@@ -1376,6 +1376,10 @@ The parser was expecting the substring: ++
 		\end{lstlisting}
 	\end{minipage}
 \end{center}
+
+As the \texttt{failure\_log} is a static variable in \texttt{base\_rule}, its lifetime is equal to that of the
+program. Thus, it has to be cleared between parses -- the \texttt{base\_rule::clear\_failure\_log()} can be
+used to do it.
 
 \vfill
 \vfill

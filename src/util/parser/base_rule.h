@@ -201,6 +201,14 @@ namespace util {
 				 */
 				static std::string get_error_message(match_range const &context);
 
+				/**
+				 * Clears the \ref failure_log.
+				 * @note This method has to be called between parses. The failure_log is a 
+				 * static variable and rules simply write it, so entries from two subsequent
+				 * parses could get mixed up causing trouble.
+				 */
+				static void clear_failure_log() {failure_log.clear();}
+
 			protected:
 				/**
 				 * Rules corresponding to terminal symbols enter data in the failure log if they fail to match.
