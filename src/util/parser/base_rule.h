@@ -209,6 +209,14 @@ namespace util {
 				 */
 				static void clear_failure_log() {failure_log.clear();}
 
+				/**
+				 * Gets the \ref failure_log.
+				 * @return the \ref failure_log
+				 */
+				static std::set<std::tuple<std::string::const_iterator, std::string>> const &get_failure_log() {
+					return failure_log;
+				}
+
 			protected:
 				/**
 				 * Rules corresponding to terminal symbols enter data in the failure log if they fail to match.

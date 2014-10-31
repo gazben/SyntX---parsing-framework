@@ -139,11 +139,19 @@ void complex_test() {
 	}
 	else {
 		std::cout << base_rule::get_error_message(base_rule::match_range(input.cbegin(), input.cend())) << std::endl;
+		std::cout << std::endl << "The failure_log:" << std::endl;
+		auto failure_log = base_rule::get_failure_log();
+		for (auto const &entry: failure_log) {
+			std::cout << (std::get<0>(entry) - input.cbegin()) << ": " << std::get<1>(entry) << std::endl;
+		}
 	}
 }
 
 int main() {
 	void (*tests[])() = {simple_test, complex_test};
 
-	for (auto test: tests) test();
+	for (auto test: tests) {
+		test();
+		base_rule::clear_failure_log();
+	}
 }
