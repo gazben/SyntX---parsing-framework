@@ -316,8 +316,8 @@ bool test_12() {
 
 	group <<= -character("(") << -sum << -character(")");
 	multiplicand <<= -integer()[([&numbers](std::string const &s){numbers.push(s);})] | group;
-	product <<= -multiplicand << *(-character("*/")[([&operations](std::string const &s){operations.push(s);})] << -multiplicand[evaluate(numbers,operations)]);
-	sum <<= -product << *(-character("+-")[([&operations](std::string const &s){operations.push(s);})] << -product[evaluate(numbers,operations)]);
+	product <<= -multiplicand << *(-character("*/")[([&operations](std::string const &s){operations.push(s);})] << (-multiplicand)[evaluate(numbers,operations)]);
+	sum <<= -product << *(-character("+-")[([&operations](std::string const &s){operations.push(s);})] << (-product)[evaluate(numbers,operations)]);
 
 	base_rule::match_range a_range;
 	base_rule::match_range i(expression.begin(), expression.end());

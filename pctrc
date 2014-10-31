@@ -1,13 +1,13 @@
 ("SyntX"
-	(compiler_name "clang++")
+	(compiler_name "g++")
 	(dont_link_flag "-c")
 	(output_flag "-o")
 	(library_flag "-l")
 	(includes_path_flag "-I")
 	(optimization_flag "-O")
-	(optimization_level "2")
+	(optimization_level "0")
 	(extra_options 
-		("-Wall" "-Werror" "-pedantic" "-std=c++11")
+		("-Wall" "-Werror" "-pedantic" "-std=c++11" "-g")
 	)
 	(target_directory "bin")
 	(object_directory "obj")
