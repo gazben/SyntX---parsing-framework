@@ -363,6 +363,34 @@ complex = ( rule1[action1] rule2[action2] rule3[action3] )[action4]
 Actions~1-3 should place the results of the matches in temporary variables and action~4 should construct the
 complex data.
 
+There is another pitfall with actions. An action is attached to a rule. It can be attached to a rule variable
+and a compound temporary rule. In the first case, the action will be executed every time the given rule
+matches which is not necessarily the intended behaviour. Let's consider the following expression:
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[breaklines=true]
+rule1 = rule2 rule3 rule2[action]
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+Here the intent of the author is that the \texttt{action} is run only when \texttt{rule2} is matched after a
+sequence of \texttt{rule2-rule3} has already matched. In fact, in this case, \texttt{action} will be run two
+times if the expression matches.
+
+The intended behaviour can be realized by putting the action on a compound rule that matches the same
+substring. One solution is to use the \texttt{epsilon} built-in rule, which doesn't consume anything but
+matches always. Whitespace consuming rules can also be used to solve such problems.
+
+\begin{center}
+	\begin{minipage}[h]{0.8\textwidth}
+		\begin{lstlisting}[breaklines=true]
+rule1 = rule2 rule3 (rule2 epsilon)[action]
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
 Please note that this is not exactly the correct syntax -- it is only shown for demonstration purposes here.
 
 \usec{The SyntX framework}{syntx}
