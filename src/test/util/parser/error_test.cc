@@ -26,11 +26,12 @@
 #include <string>
 #include <iostream>
 
+#include <util/tester/tester.h>
 #include <util/parser/parser.h>
 
 using namespace util::parser;
 
-void simple_test() {
+bool simple_test() {
 	rule addition, addend, expression;
 
 	addition <<= -addend << +(-character("+") << -addend);
@@ -41,14 +42,21 @@ void simple_test() {
 	base_rule::match_range context(input.cbegin(), input.cend());
 	base_rule::match_range result;
 
-	if (addition.match(context, result))
+	if (addition.match(context, result)) {
 		std::cout << "Matched: " << std::string(result.first, result.second) << std::endl;
+		
+		base_rule::clear_failure_log();
+		return false;
+	}
 	else {
 		std::cout << base_rule::get_error_message(base_rule::match_range(input.cbegin(), input.cend())) << std::endl;
+
+		base_rule::clear_failure_log();
+		return true;
 	}
 }
 
-void complex_test() {
+bool complex_test() {
 	rule program;
 	rule for_loop;
 	rule range_for("range_for");
@@ -136,22 +144,30 @@ void complex_test() {
 
 	if (program.match(context, result) && context.first == context.second) {
 		std::cout << "Matched: " << std::string(result.first, result.second) << std::endl;
+
+		base_rule::clear_failure_log();
+		return false;
 	}
 	else {
+		std::cout << base_rule::get_error_message(base_rule::match_range(input.cbegin(), input.cend()), util::make_enum_set({base_rule::rule_type::terminal_rule, base_rule::rule_type::semi_terminal_rule})) << std::endl;
 		std::cout << base_rule::get_error_message(base_rule::match_range(input.cbegin(), input.cend())) << std::endl;
-		std::cout << std::endl << "The failure_log:" << std::endl;
-		auto failure_log = base_rule::get_failure_log();
+
+		std::cout << std::endl << std::endl << "The failure_log:" << std::endl;
+		auto const &failure_log = base_rule::get_failure_log();
 		for (auto const &entry: failure_log) {
-			std::cout << (std::get<0>(entry) - input.cbegin()) << ": " << std::get<1>(entry) << std::endl;
+			std::cout << (entry.the_position - input.cbegin()) << ": " << entry.the_message << std::endl;
 		}
+
+		base_rule::clear_failure_log();
+		return true;
 	}
 }
 
 int main() {
-	void (*tests[])() = {simple_test, complex_test};
+	util::tester::tester the_tester(__FILE__);
 
-	for (auto test: tests) {
-		test();
-		base_rule::clear_failure_log();
-	}
+	the_tester.add(simple_test);
+	the_tester.add(complex_test);
+
+	return the_tester.run();
 }

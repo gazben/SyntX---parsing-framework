@@ -63,7 +63,7 @@ namespace util {
 		void identifier::insert_failure_entry(std::string::const_iterator const &position) const {
 			std::stringstream stream;
 			stream << "an identifier containing the following extra characters: {" << extra_characters << "}";
-			failure_log.insert(std::make_tuple(position, stream.str()));	
+			the_failure_log.insert(base_rule::failure_entry(position, base_rule::rule_type::semi_terminal_rule, stream.str()));	
 		}
 	}
 }

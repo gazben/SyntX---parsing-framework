@@ -27,9 +27,11 @@
 #include <util/enum_set.h>
 #include <util/tester/tester.h>
 
+using util::enum_set;
+
 class foo {
 	public:
-		enum class bar {foo_bar, bar_foo};
+		enum class bar {foo_bar, bar_foo, foo_foo, bar_bar};
 };
 
 bool test_0() {
@@ -37,20 +39,22 @@ bool test_0() {
 
 	if (!a_set.has(foo::bar::foo_bar)) return false;
 	if (a_set.has(foo::bar::bar_foo)) return false;
-	std::cout << a_set.has(foo::bar::foo_bar) << std::endl;
-	std::cout << a_set.has(foo::bar::bar_foo) << std::endl;
 
 	a_set.insert(foo::bar::bar_foo);
 	if (!a_set.has(foo::bar::foo_bar)) return false;
 	if (!a_set.has(foo::bar::bar_foo)) return false;
-	std::cout << a_set.has(foo::bar::foo_bar) << std::endl;
-	std::cout << a_set.has(foo::bar::bar_foo) << std::endl;
 
 	a_set.remove(foo::bar::foo_bar);
 	if (a_set.has(foo::bar::foo_bar)) return false;
 	if (!a_set.has(foo::bar::bar_foo)) return false;
-	std::cout << a_set.has(foo::bar::foo_bar) << std::endl;
-	std::cout << a_set.has(foo::bar::bar_foo) << std::endl;
+
+	a_set.insert({foo::bar::foo_foo, foo::bar::bar_bar});
+	if (!a_set.has(foo::bar::foo_foo)) return false;
+	if (!a_set.has(foo::bar::bar_bar)) return false;
+
+	a_set.remove({foo::bar::foo_foo, foo::bar::bar_bar});
+	if (a_set.has(foo::bar::foo_foo)) return false;
+	if (a_set.has(foo::bar::bar_bar)) return false;
 
 	return true;
 }

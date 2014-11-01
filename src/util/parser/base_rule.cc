@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#include <iostream>
 
 #include <cctype>
 #include <fstream>
@@ -34,7 +35,7 @@ namespace util {
 	namespace parser {
 		std::shared_ptr<base_rule::node> base_rule::dont_build_ast;
 		bool base_rule::build_ast = false;
-		std::set<std::tuple<std::string::const_iterator, std::string>> base_rule::failure_log;
+		base_rule::failure_log base_rule::the_failure_log;
 
 		bool base_rule::match(match_range &context, match_range &the_match_range, std::shared_ptr<node> &ast_root) {
 			match_range a_range;
@@ -88,14 +89,14 @@ namespace util {
 			return "The failure log is empty.";
 		}
 
-		std::string base_rule::get_error_message(match_range const &context) {
-			if (failure_log.empty()) return "";
+		std::string base_rule::get_error_message(match_range const &context, util::enum_set<rule_type> const &error_level) {
+			if (the_failure_log.empty()) return "";
 
-			auto error_entry = get_failure_cause();	
-			
+			auto const &first_entry = *(the_failure_log.get_log().crbegin());
+
 			size_t characters_before = 0;
-			std::string::const_iterator i_before = std::get<0>(error_entry);
-			std::string::const_iterator i_after = std::get<0>(error_entry);
+			std::string::const_iterator i_before = first_entry.the_position;
+			std::string::const_iterator i_after = first_entry.the_position;
 
 			while (i_before > context.first && *i_before != '\n') {++characters_before; --i_before;}
 
@@ -119,18 +120,39 @@ namespace util {
 
 			for (size_t i = 0; i < characters_before; ++i) {
 				char current = i_before[i];
-				if (std::isspace(current) && current != '\n') message << current;
+				if (std::isspace(current)) {
+					if (current != '\n' && current != '\r') message << current;
+				}
 				else message << " ";
 			}
 
-			message << "^" << std::endl << "The parser was expecting " << std::get<1>(error_entry);
+			message << "^" << std::endl << "The parser was expecting" << std::endl << "\t";
+
+			auto &error_entries = the_failure_log.get_log();
+			std::sort(error_entries.begin(), error_entries.end());
+			auto it = std::unique(error_entries.begin(), error_entries.end());
+			error_entries.resize(std::distance(error_entries.begin(),it));
+
+			bool is_first = true;
+			for (auto const &entry: error_entries) {
+				if (error_level.has(entry.the_type)) {
+					if (is_first) is_first = false;
+					else message << std::endl << "\tor ";
+
+					if (entry.the_type == rule_type::semi_terminal_rule) message << "[SEMI-TERMINAL]: ";
+					message << entry.the_message;
+				}
+			}
 
 			return message.str();
 		}
-		
-		std::tuple<std::string::const_iterator, std::string> const &base_rule::get_failure_cause() {
-			if (failure_log.empty()) throw empty_failure_log();
-			return *failure_log.crbegin();
+
+		void base_rule::failure_log::insert(failure_entry const &an_entry) {
+			if (!the_log.empty() && the_log.crbegin()->the_position < an_entry.the_position) {
+				the_log.clear();
+			}
+
+			the_log.push_back(an_entry);
 		}
 
 	}

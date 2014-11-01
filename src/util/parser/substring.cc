@@ -57,7 +57,7 @@ namespace util {
 		void substring::insert_failure_entry(std::string::const_iterator const &position) const {
 			std::stringstream stream;
 			stream << "the substring: " << the_word; 
-			failure_log.insert(std::make_tuple(position, stream.str()));	
+			the_failure_log.insert(base_rule::failure_entry(position, base_rule::rule_type::terminal_rule, stream.str()));	
 		}
 	}
 }

@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+#include <sstream>
+#include <iostream>
+
 #include <util/parser/rule.h>
 #include <util/parser/option.h>
 #include <util/parser/repetition.h>
@@ -35,8 +38,9 @@ namespace util {
 	namespace parser {
 		bool rule::test(match_range &context, match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
 			if (!(*the_rule)) throw undefined_rule();
-			if (!get_build_ast() || rule_name == "")
+			if (!get_build_ast() || rule_name == "") {
 				return (*the_rule)->match(context, the_match_range, ast_root);
+			}
 			else {
 				std::shared_ptr<base_rule::node> child;
 				if ((*the_rule)->match(context, the_match_range, child)) {

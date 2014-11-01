@@ -25,14 +25,17 @@
 #ifndef _UTIL_PARSER_BASERULE_
 #define _UTIL_PARSER_BASERULE_
 
-#include <set>
-#include <tuple>
+//#include <set>
+//#include <tuple>
+#include <vector>
 #include <string>
 #include <memory>
 #include <vector>
 #include <utility>
 #include <exception>
 #include <functional>
+
+#include <util/enum_set.h>
 
 namespace util {
 	namespace parser {
@@ -97,6 +100,108 @@ namespace util {
 					 * @param a_type the type of the node
 					 */
 					node(type a_type) :	the_type(a_type) {}
+				};
+
+				/**
+				 * The type of a rule.
+				 * Used in error entries.
+				 */ 
+				enum class rule_type {
+					terminal_rule, /**< A terminal rule operating at the character level. */
+					semi_terminal_rule, /**< A rule that operates at the character level, but uses other character level rules inside. */
+				};
+
+				/**
+				 * An entry in the failure log holdin the position of the
+				 * error, the type of the rule that failed and an error message
+				 * describing what the parser expected at that position.
+				 */
+				struct failure_entry {
+					std::string::const_iterator the_position; /**< The position of the error. */
+					rule_type the_type; /**< The tye of the rule that failed. */
+					std::string the_message; /**< The error message describing what the parser expected to find at the given position. */
+
+					/**
+					 * Default constructor.
+					 */
+					failure_entry() {}
+
+					/**
+					 * Constructor.
+					 * @param a_position the position of the error
+					 * @param a_type the tye of the rule that failed
+					 * @param a_message the error message describing what the parser expected to find at the given position
+					 */
+					failure_entry(std::string::const_iterator a_position, rule_type a_type, std::string const &a_message) :
+						the_position(a_position),
+						the_type(a_type),
+						the_message(a_message) {}
+
+					/**
+					 * Less than operator.
+					 * @param other another object
+					 * @return true if this one is less than the other
+					 */
+					bool operator <(failure_entry const &other) const {
+						return 
+							the_position < other.the_position &&
+							static_cast<size_t>(the_type) < static_cast<size_t>(other.the_type) &&
+							the_message < other.the_message; 
+					}
+
+					/**
+					 * Equal to operator.
+					 * @param other another object
+					 * @return true if this one is equal to the other
+					 */
+					bool operator ==(failure_entry const &other) const {
+						return 
+							the_position == other.the_position &&
+							static_cast<size_t>(the_type) == static_cast<size_t>(other.the_type) &&
+							the_message == other.the_message; 
+					}
+				};
+
+				/**
+				 * The failure log that holds the components that the error message is constructed of.
+				 */
+				class failure_log {
+					public:
+						using container_type = std::vector<failure_entry>; /**< The type of the container that is used to store the log.*/
+
+					private:
+						container_type the_log; /**< The log.*/
+
+					public:
+						/**
+						 * Inserts a new entry to the log.
+						 * @param an_entry the new entry
+						 */
+						void insert(failure_entry const &an_entry);
+
+						/**
+						 * Gets the container that holds the log.
+						 * @return the container that holds the log
+						 */
+						container_type const &get_log() const {return the_log;}
+
+						/**
+						 * Gets the container that holds the log.
+						 * @return the container that holds the log
+						 */
+						container_type &get_log() {return the_log;}
+
+						/**
+						 * Clears the log.
+						 * @note It is necessary to do that between parses.
+						 */
+						void clear_log() {the_log.clear();}
+
+						/**
+						 * Checks whether the log is empty.
+						 * @return true if the log is empty
+						 */
+						bool empty() const {return the_log.empty();}
 				};
 
 				/**
@@ -186,20 +291,14 @@ namespace util {
 				static bool get_build_ast() {return build_ast;}
 
 				/**
-				 * Returns the failure log entry of the rule that reached farthest in the text.
-				 * @return the failure log entry of the rule that reached farthest in the text
-				 * @throw base_rule::empty_failure_log if the failure_log is empty
-				 */
-				static std::tuple<std::string::const_iterator, std::string> const &get_failure_cause();
-
-				/**
 				 * Generates an error message based on the failure log.
 				 * @param context the bounds of the parsed text
-				 * @note The parameter is needed as the bounds of the text
+				 * @note The context is needed as the bounds of the text
 				 * are lost during the parsing process.
+				 * @param error_level the type of rules to include in the error message
 				 * @return an error message based on the failure log
 				 */
-				static std::string get_error_message(match_range const &context);
+				static std::string get_error_message(match_range const &context, util::enum_set<rule_type> const &error_level = enum_set<rule_type>({rule_type::terminal_rule}));
 
 				/**
 				 * Clears the \ref failure_log.
@@ -207,14 +306,14 @@ namespace util {
 				 * static variable and rules simply write it, so entries from two subsequent
 				 * parses could get mixed up causing trouble.
 				 */
-				static void clear_failure_log() {failure_log.clear();}
+				static void clear_failure_log() {the_failure_log.clear_log();}
 
 				/**
 				 * Gets the \ref failure_log.
 				 * @return the \ref failure_log
 				 */
-				static std::set<std::tuple<std::string::const_iterator, std::string>> const &get_failure_log() {
-					return failure_log;
+				static failure_log::container_type const &get_failure_log() {
+					return the_failure_log.get_log();
 				}
 
 			protected:
@@ -228,7 +327,7 @@ namespace util {
 
 			protected:
 				static std::shared_ptr<node> dont_build_ast; /**< The default value of AST root (used when the tree is not built). */
-				static std::set<std::tuple<std::string::const_iterator, std::string>> failure_log; /**< The log where terminal symbols enter data when they fail.*/
+				static failure_log the_failure_log; /**< The log where terminal symbols enter data when they fail.*/
 		};
 	}
 }
