@@ -1301,10 +1301,10 @@ testing whether a named rule is really there. This would be very cumbersome.
 
 \usubsec{Error message handling}{error}
 When the text being parsed is fully conforming to the grammar then it is very easy and comfortable to work
-with using the library as described above. Probems arise when there are syntactic errors as all the
-\texttt{match} method tells us about the success of the matching is a boolean value. Without further help the
-entire text needs to be parsed by the user of the framework in case of errors which can be a very hard task
-and thus parsing libraries are expected to be of a little more help.
+with the library as described above. Probems arise when there are syntactic errors as all the \texttt{match}
+method tells us about the success of the matching is a boolean value. Without further help the entire text
+needs to be parsed by the user of the framework in case of errors which can be a very hard task and thus
+parsing libraries are expected to be of a little more help.
 
 Finding the position of the syntactic error is not so easy though. The problem is that there are always rules
 that fail to match during parsing even when the text is perfect. This is because alternations can be defined.
@@ -1324,13 +1324,15 @@ It is very hard to find the ultimate solution to this problem. Even the best com
 messages sometimes. Heuristic methods are used and they are constantly improved.
 
 The SyntX library takes a very simplistic but generally fairly correct approach. The \texttt{base\_rule} class
-has a static member called \texttt{failure\_log} that contains tuples consisting of two members: an iterator
-pointing to a position where the parsing failed and a string that says what was expected at that point.
+has a static member called \texttt{the\_failure\_log} that contains \texttt{failure\_entry} structs: an
+iterator pointing to a position where the parsing failed, the type of the rule that reported the error and a
+string that says what was expected at that point.
 
-Terminal rules can report errors in this container. Whenever a rule that operates at the character level
-fails, it adds an entry to it telling its current position and describing what it was looking for. The
-\texttt{insert\_failure\_entry} method is used to do this which is a virtual method in \texttt{base\_rule}. It
-is not pure virtual as every rule inherits it, but only the terminals will act, the rest leave it empty.
+Terminal rules and user rules can report errors in this container. Whenever a rule that operates at the
+character level fails, it adds an entry to it telling its current position and describing what it was looking
+for. The \texttt{insert\_failure\_entry} method is used to do this which is a virtual method in
+\texttt{base\_rule}. It is not pure virtual as every rule inherits it, but only the terminals will act, the
+rest leave it empty.
 
 This method is called by \texttt{base\_rule::match} as it is that method that knows whether the matching of a
 rule was successful or not and also the current position of the parsing. The latter has to be passed to
@@ -1372,7 +1374,7 @@ Next, let us investigate an example of the logging method:
 void character::insert_failure_entry(std::string::const_iterator const &position) const {
 	std::stringstream stream;
 	stream << "a character from the set: {" << allowed_characters << "}";
-	failure_log.insert(std::make_tuple(position, stream.str()));	
+	the_failure_log.insert(base_rule::failure_entry(position, base_rule::rule_type::terminal_rule, stream.str())); 
 }
 		\end{lstlisting}
 	\end{minipage}
@@ -1384,30 +1386,187 @@ The \texttt{failure\_log} will contain elements after almost every parsing run r
 mentioned above, every alternation will result in failures that appear in the log. Here comes the heuristics:
 the log entry that is most likely to be the root cause of a failure has to be found when the parsing fails.
 
-The SyntX library chooses the entry that is farthest from the beginning of the text. In most cases the
+The SyntX library chooses the entries that are farthest from the beginning of the text. In most cases the
 processed text is almost correct, so it is very likely that the parsing route that reaches deepest into it is
 the interpretation that the author intended.
 
-There are two ways to get hold of the information regarding errors in SyntX:
-\texttt{base\_rule::get\_failure\_cause} returns the element of \texttt{failure\_log} with the largest string
-iterator and lets the user create an error message using the information in the entry,
-\texttt{base\_rule::get\_error\_message} returns a string that contains the text in the \texttt{failure\_log}
-entry plus the part of the text that contained the error, the position of which is shown with a \texttt{\^}
-symbol:
+It is due to alternations that more than one rule can reach to the farthest point. Any of them can be the
+one that the author intended at that point so all them should be listed. The \texttt{insert} method of the
+\texttt{failure\_log} clears the log if the new entry's position is further than the previous one. This way
+the log will only contain the relevant results when the parsing fails.
+
+The \texttt{base\_rule::get\_error\_message} static method returns a string that contains the text in the
+\texttt{failure\_log} entry plus the part of the text that contained the error, the position of which is shown
+with a \texttt{\^} symbol:
 \begin{center}
 	\begin{minipage}[ht]{0.6\textwidth}
 		\begin{lstlisting}[breaklines=true]
 An error occured here (line 11):
 			+apple;
 			 ^
-The parser was expecting the substring: ++
+The parser was expecting
+						the substring: +i+
 		\end{lstlisting}
 	\end{minipage}
 \end{center}
 
-As the \texttt{failure\_log} is a static variable in \texttt{base\_rule}, its lifetime is equal to that of the
+As \texttt{the\_failure\_log} is a static variable in \texttt{base\_rule}, its lifetime is equal to that of the
 program. Thus, it has to be cleared between parses -- the \texttt{base\_rule::clear\_failure\_log()} can be
 used to do it.
+
+In the \texttt{insert\_failure\_entry} method above, we passed three arguments to
+\texttt{failure\_log::insert}. The second was the type the rule, which is
+\texttt{base\_rule::rule\_type::terminal\_rule} in the case of a \texttt{character}.
+
+The \texttt{rule\_type} enumeration is needed for the several reasons. There are two types of rules that work
+at the character-level. Simple rules, like \texttt{character} explore the text directly and don't use other
+rules to help them. There are rules, such as \texttt{keyword} that make use of rules like \texttt{range} to
+help their work. They are also terminal-rules, but their \texttt{test} methods instantiate and use other
+rules. If these rules (e.g. \texttt{identifier}, \texttt{integer}, \texttt{keyword}, \texttt{real}) simply
+added entries to the log then there would be several entries for the same position that are rooted in fact in
+the same grammatical rule. For example, \texttt{keyword} will look for characters in the range of \texttt{[A, Z]}, so
+if \texttt{keyword} fails, we get a \texttt{range} entry and a \texttt{keyword} entry which can be confusing
+if we are not aware of the behaviour of the framework. For this reason, the rules mentioned above (they are
+called \emph{semi-terminal rules} in the framework) enter logs of a different type.
+
+The \texttt{get\_error\_message} method can filter the log entries using it's second argument, which is an
+\texttt{enum\_set}. It is a type that can hold any number of enum constants of the same type. Here it is used
+to define the type of rules that we want to include in our error message. It has a default value, which is
+\texttt{rule\_type::terminal\_rule} so no confusing duplicates appear in the error message by default. If we
+know what we're doing, we can let other rules give entries:
+
+\begin{center}
+	\begin{minipage}[ht]{0.9\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+std::cout <<
+	base_rule::get_error_message(
+		base_rule::match_range(input.cbegin(), input.cend()),
+		util::make_enum_set(
+			{
+				base_rule::rule_type::terminal_rule,
+				base_rule::rule_type:: semi_terminal_rule
+			}
+		)
+	) << std::endl; 
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+The \texttt{make\_enum\_set} is a helper function that takes an initializer list containing enum constants and
+creates an \texttt{enum\_set}.
+
+There is a third type of rules: \texttt{named\_rule}. These are the user-defined rules that get a name in
+their constructors. They can be used to create extra nodes in the AST but also to give extra error messages.
+Sometimes it can be useful to see our own rules in the error messages -- it can make it easier to find errors
+in either the parsed text or our grammar. On the other hand, these messages will definitely contain duplicates
+as the user-defined rules are always built upon character-level rules.
+
+The named rules don't use \texttt{rule::insert\_entry\_log} to enter data in the log. This is because this
+method would be called by many rules as basically every compound rule is a \texttt{util::parser::rule} instance. So
+the \texttt{test} method of the \texttt{rule} class has to be altered to realize the needed operation:
+\begin{center}
+	\begin{minipage}[ht]{0.9\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+bool rule::test(match_range &context, match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
+	if (!(*the_rule)) throw undefined_rule();
+
+	bool result;
+
+	if (!get_build_ast() || rule_name == "") {
+		result = (*the_rule)->match(context, the_match_range, ast_root);
+	}
+	else {
+		std::shared_ptr<base_rule::node> child;
+		result = (*the_rule)->match(context, the_match_range, child);
+
+		if (result) {
+			if (child) {
+				ast_root = std::make_shared<base_rule::node>(base_rule::node::type::named_rule);
+				ast_root->the_value = rule_name;
+				ast_root->children.push_back(child);
+			}
+		}
+	}
+
+	if (!result && rule_name != "") {
+		std::stringstream stream;
+		stream << "a(n) " << rule_name;
+		the_failure_log.insert(base_rule::failure_entry(context.first, base_rule::rule_type::named_rule, stream.str()));	
+	}
+
+	return result;
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+The parts before line~22 are basically the same as seen before (the only difference is that the \texttt{result} variable was
+introduced to store the return value of the \texttt{match} calls).
+
+The new part starts in line~22. If the result is false, which means that the rule failed and the rule is a
+named rule, then we need to enter a message directly in the log. This happens inside the \texttt{if} block.
+The code there is basically the same as the contents of an \texttt{insert\_entry\_log} in any character-level
+class.
+
+Error messages using different error levels can be seen below. First, using the default settings, only the
+entries of real terminal rules can be seen:
+\begin{center}
+	\begin{minipage}[ht]{0.8\textwidth}
+		\begin{lstlisting}[breaklines=true]
+An error occured here (line 11):
+			+apple;
+			 ^
+The parser was expecting
+	a character from the range [A, Z]
+	or a character from the range [a, z]
+	or a character from the set: {_}
+	or the substring: ++
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+Next, we can also observe the entries of the so called \emph{semi-terminal rules}:
+\begin{center}
+	\begin{minipage}[ht]{0.8\textwidth}
+		\begin{lstlisting}[breaklines=true]
+An error occured here (line 11):
+			+apple;
+			 ^
+The parser was expecting
+	a character from the range [A, Z]
+	or a character from the range [a, z]
+	or a character from the set: {_}
+	or [SEMI-TERMINAL]: an identifier containing the following extra characters: {_}
+	or [SEMI-TERMINAL]: the keyword: for
+	or the substring: ++
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+Finally, the named rule give entries also:
+\begin{center}
+	\begin{minipage}[ht]{0.8\textwidth}
+		\begin{lstlisting}[breaklines=true]
+An error occured here (line 11):
+			+apple;
+			 ^
+The parser was expecting
+	a character from the range [A, Z]
+	or a character from the range [a, z]
+	or a character from the set: {_}
+	or [NAMED RULE]: a(n) iterator_for
+	or [NAMED RULE]: a(n) range_for
+	or [SEMI-TERMINAL]: an identifier containing the following extra characters: {_}
+	or [SEMI-TERMINAL]: the keyword: for
+	or the substring: ++
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+It goes without saying that \texttt{enum\_set} allows any desired combination of the three rule types to
+appear in the message. The recommendation is to use the default case though, as messages generated using
+non-terminal or named rules are ambiguous and might be confusing for those who are not aware of how the
+framework operates behind the scenes.
 
 \vfill
 \vfill

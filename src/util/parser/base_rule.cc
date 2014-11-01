@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include <iostream>
 
 #include <cctype>
 #include <fstream>
@@ -129,8 +128,18 @@ namespace util {
 			message << "^" << std::endl << "The parser was expecting" << std::endl << "\t";
 
 			auto &error_entries = the_failure_log.get_log();
-			std::sort(error_entries.begin(), error_entries.end());
-			auto it = std::unique(error_entries.begin(), error_entries.end());
+			std::sort(error_entries.begin(), error_entries.end(),
+				[](base_rule::failure_entry const &lhs, base_rule::failure_entry const &rhs) -> bool {
+					return
+						lhs.the_message < rhs.the_message;
+				}
+			);
+			auto it = std::unique(error_entries.begin(), error_entries.end(),
+				[](base_rule::failure_entry const &lhs, base_rule::failure_entry const &rhs) -> bool {
+					return
+						lhs.the_message == rhs.the_message;
+				}
+			);
 			error_entries.resize(std::distance(error_entries.begin(),it));
 
 			bool is_first = true;
@@ -140,6 +149,7 @@ namespace util {
 					else message << std::endl << "\tor ";
 
 					if (entry.the_type == rule_type::semi_terminal_rule) message << "[SEMI-TERMINAL]: ";
+					if (entry.the_type == rule_type::named_rule) message << "[NAMED RULE]: ";
 					message << entry.the_message;
 				}
 			}

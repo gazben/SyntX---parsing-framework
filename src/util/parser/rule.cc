@@ -38,21 +38,32 @@ namespace util {
 	namespace parser {
 		bool rule::test(match_range &context, match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root) {
 			if (!(*the_rule)) throw undefined_rule();
+
+			bool result;
+
 			if (!get_build_ast() || rule_name == "") {
-				return (*the_rule)->match(context, the_match_range, ast_root);
+				result = (*the_rule)->match(context, the_match_range, ast_root);
 			}
 			else {
 				std::shared_ptr<base_rule::node> child;
-				if ((*the_rule)->match(context, the_match_range, child)) {
+				result = (*the_rule)->match(context, the_match_range, child);
+
+				if (result) {
 					if (child) {
 						ast_root = std::make_shared<base_rule::node>(base_rule::node::type::named_rule);
 						ast_root->the_value = rule_name;
 						ast_root->children.push_back(child);
 					}
-					return true;
 				}
-				else return false;
 			}
+
+			if (!result && rule_name != "") {
+				std::stringstream stream;
+				stream << "a(n) " << rule_name;
+				the_failure_log.insert(base_rule::failure_entry(context.first, base_rule::rule_type::named_rule, stream.str()));	
+			}
+
+			return result;
 		}
 
 		rule &rule::operator <<=(base_rule const &rhs) {

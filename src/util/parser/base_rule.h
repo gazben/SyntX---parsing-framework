@@ -25,8 +25,6 @@
 #ifndef _UTIL_PARSER_BASERULE_
 #define _UTIL_PARSER_BASERULE_
 
-//#include <set>
-//#include <tuple>
 #include <vector>
 #include <string>
 #include <memory>
@@ -109,6 +107,7 @@ namespace util {
 				enum class rule_type {
 					terminal_rule, /**< A terminal rule operating at the character level. */
 					semi_terminal_rule, /**< A rule that operates at the character level, but uses other character level rules inside. */
+					named_rule /**< A named rule created by the user of the framework. */
 				};
 
 				/**
