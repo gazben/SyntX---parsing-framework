@@ -109,6 +109,12 @@ namespace util {
 				 * Assigns a \ref base_rule to the \ref rule.
 				 */
 				rule &operator <<=(base_rule const &rhs);
+
+			protected:
+				/**
+				 * @copydoc util::parser::base_rule::insert_failure_entry
+				 */
+				virtual void insert_failure_entry(std::string::const_iterator const &position) const override;
 		};
 
 		/**

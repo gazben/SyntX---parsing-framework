@@ -150,8 +150,8 @@ bool complex_test() {
 	}
 	else {
 		std::cout << base_rule::get_error_message(base_rule::match_range(input.cbegin(), input.cend())) << std::endl;
-		std::cout << base_rule::get_error_message(base_rule::match_range(input.cbegin(), input.cend()), util::make_enum_set({base_rule::rule_type::terminal_rule, base_rule::rule_type::semi_terminal_rule})) << std::endl;
-		std::cout << base_rule::get_error_message(base_rule::match_range(input.cbegin(), input.cend()), util::make_enum_set({base_rule::rule_type::terminal_rule, base_rule::rule_type::semi_terminal_rule, base_rule::rule_type::named_rule})) << std::endl;
+		std::cout << base_rule::get_error_message(base_rule::match_range(input.cbegin(), input.cend()), {base_rule::rule_type::terminal_rule, base_rule::rule_type::semi_terminal_rule}) << std::endl;
+		std::cout << base_rule::get_error_message(base_rule::match_range(input.cbegin(), input.cend()), {base_rule::rule_type::terminal_rule, base_rule::rule_type::semi_terminal_rule, base_rule::rule_type::named_rule}) << std::endl;
 
 		std::cout << std::endl << std::endl << "The failure_log:" << std::endl;
 		auto const &failure_log = base_rule::get_failure_log();

@@ -1331,8 +1331,8 @@ string that says what was expected at that point.
 Terminal rules and user rules can report errors in this container. Whenever a rule that operates at the
 character level fails, it adds an entry to it telling its current position and describing what it was looking
 for. The \texttt{insert\_failure\_entry} method is used to do this which is a virtual method in
-\texttt{base\_rule}. It is not pure virtual as every rule inherits it, but only the terminals will act, the
-rest leave it empty.
+\texttt{base\_rule}. It is not pure virtual as every rule inherits it, but only the terminals and named rules
+will act, the rest leave it empty.
 
 This method is called by \texttt{base\_rule::match} as it is that method that knows whether the matching of a
 rule was successful or not and also the current position of the parsing. The latter has to be passed to
@@ -1441,19 +1441,18 @@ know what we're doing, we can let other rules give entries:
 std::cout <<
 	base_rule::get_error_message(
 		base_rule::match_range(input.cbegin(), input.cend()),
-		util::make_enum_set(
-			{
-				base_rule::rule_type::terminal_rule,
-				base_rule::rule_type:: semi_terminal_rule
-			}
-		)
+		{
+			base_rule::rule_type::terminal_rule,
+			base_rule::rule_type:: semi_terminal_rule
+		}
 	) << std::endl; 
 		\end{lstlisting}
 	\end{minipage}
 \end{center}
 
-The \texttt{make\_enum\_set} is a helper function that takes an initializer list containing enum constants and
-creates an \texttt{enum\_set}.
+One of the constructors of \texttt{enum\_set} takes an initializer list containing enum constants -- this is
+used here as it is very convenient to simply list the needed constants at the arguments list of the
+\texttt{get\_error\_message} method.
 
 There is a third type of rules: \texttt{named\_rule}. These are the user-defined rules that get a name in
 their constructors. They can be used to create extra nodes in the AST but also to give extra error messages.
@@ -1461,9 +1460,31 @@ Sometimes it can be useful to see our own rules in the error messages -- it can 
 in either the parsed text or our grammar. On the other hand, these messages will definitely contain duplicates
 as the user-defined rules are always built upon character-level rules.
 
-The named rules don't use \texttt{rule::insert\_entry\_log} to enter data in the log. This is because this
-method would be called by many rules as basically every compound rule is a \texttt{util::parser::rule} instance. So
-the \texttt{test} method of the \texttt{rule} class has to be altered to realize the needed operation:
+Named rules (i.e. instances of the \texttt{rule} class that were created and named by the user) also define
+the \texttt{insert\_failure\_entry} method. It is very similar to the previously seen versions, the only
+difference is that they have to check whether they are named or not. This is very important as there are a lot
+of \texttt{rule} instances in a parser: every compound rule (e.g. the result of a concatenation) is stored in
+a \texttt{rule}), and we don't want them to litter the log:
+\begin{center}
+	\begin{minipage}[ht]{0.9\textwidth}
+		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
+void rule::insert_failure_entry(std::string::const_iterator const &position) const {
+	if (rule_name != "") {
+		std::stringstream stream;
+		stream << "a(n) " << rule_name;
+		the_failure_log.insert(base_rule::failure_entry(position, base_rule::rule_type::named_rule, stream.str()));	
+	}
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+The \texttt{rule::test} method was also altered a bit to ease the call to \texttt{insert\_failure\_log}. The
+parts before line~22 are basically the same as seen before (the only difference is that the \texttt{result}
+variable was introduced to store the return value of the \texttt{match} calls). The only important difference
+to the previously seen version is that in case of a failure there is a call to \texttt{insert\_entry\_log} in
+line~22.
+
 \begin{center}
 	\begin{minipage}[ht]{0.9\textwidth}
 		\begin{lstlisting}[language=C++, breaklines=true, numbers=left]
@@ -1488,25 +1509,13 @@ bool rule::test(match_range &context, match_range &the_match_range, std::shared_
 		}
 	}
 
-	if (!result && rule_name != "") {
-		std::stringstream stream;
-		stream << "a(n) " << rule_name;
-		the_failure_log.insert(base_rule::failure_entry(context.first, base_rule::rule_type::named_rule, stream.str()));	
-	}
+	if (!result) insert_failure_entry(context.first);
 
 	return result;
 }
 		\end{lstlisting}
 	\end{minipage}
 \end{center}
-
-The parts before line~22 are basically the same as seen before (the only difference is that the \texttt{result} variable was
-introduced to store the return value of the \texttt{match} calls).
-
-The new part starts in line~22. If the result is false, which means that the rule failed and the rule is a
-named rule, then we need to enter a message directly in the log. This happens inside the \texttt{if} block.
-The code there is basically the same as the contents of an \texttt{insert\_entry\_log} in any character-level
-class.
 
 Error messages using different error levels can be seen below. First, using the default settings, only the
 entries of real terminal rules can be seen:

@@ -57,13 +57,17 @@ namespace util {
 				}
 			}
 
-			if (!result && rule_name != "") {
-				std::stringstream stream;
-				stream << "a(n) " << rule_name;
-				the_failure_log.insert(base_rule::failure_entry(context.first, base_rule::rule_type::named_rule, stream.str()));	
-			}
+			if (!result) insert_failure_entry(context.first);
 
 			return result;
+		}
+
+		void rule::insert_failure_entry(std::string::const_iterator const &position) const {
+			if (rule_name != "") {
+				std::stringstream stream;
+				stream << "a(n) " << rule_name;
+				the_failure_log.insert(base_rule::failure_entry(position, base_rule::rule_type::named_rule, stream.str()));	
+			}
 		}
 
 		rule &rule::operator <<=(base_rule const &rhs) {
