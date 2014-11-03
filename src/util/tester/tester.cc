@@ -55,7 +55,12 @@ namespace util {
 			}
 
 			std::cerr << double_line << std::endl;
-			std::cerr << " " << errors << ((errors > 1) ? " have" : " has") << " failed out of " << i << " test" << ((i > 1) ? "s " : " ") << "in " << file_name << std::endl;
+			if (errors == 0) {
+				std::cerr << "Every test (" << size << ") passed in " << file_name << std::endl;
+			}
+			else {
+				std::cerr << " " << errors << ((errors > 1) ? " have" : " has") << " failed out of " << size << " test" << ((size > 1) ? "s " : " ") << "in " << file_name << std::endl;
+			}
 			std::cerr << double_line << std::endl << std::endl;
 
 			return errors;

@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-#include <set>
+#include <unordered_set>
 #include <initializer_list>
 
 namespace util {
@@ -34,7 +34,22 @@ namespace util {
 	template <typename enum_type>
 		class enum_set {
 			private:
-				std::set<enum_type> the_enum_set; /**< The set that contains the values.*/
+				/**
+				 * A hash helper class for the unordered_set. 
+				 */
+				class enum_hash {
+					public:
+						/**
+						 * The function call operator that calculates the hash.
+						 * @param value the enum value that needs a hash
+						 * @return the hash value of the argument
+						 */
+						size_t operator()(enum_type const &value) const {
+							return static_cast<size_t>(value);
+						}
+				};
+
+				std::unordered_set<enum_type, enum_hash> the_enum_set; /**< The set that contains the values.*/
 
 			public:
 				/**
