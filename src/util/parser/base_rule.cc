@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#include <iostream>
 
 #include <cctype>
 #include <fstream>
@@ -117,12 +118,9 @@ namespace util {
 			message << "An error occured here (line " << line_number <<  "):" << std::endl;
 			message << std::string(i_before, i_after) << std::endl;
 
-			for (size_t i = 0; i < characters_before; ++i) {
-				char current = i_before[i];
-				if (std::isspace(current)) {
-					if (current != '\n' && current != '\r') message << current;
-				}
-				else message << " ";
+			for (auto spaces = i_before; spaces < first_entry.the_position; ++spaces) {
+				if (*spaces == '\t') message << "\t";
+				else if (*spaces != '\n' && *spaces != '\r') message << " ";
 			}
 
 			message << "^" << std::endl << "The parser was expecting" << std::endl << "\t";
@@ -158,11 +156,26 @@ namespace util {
 		}
 
 		void base_rule::failure_log::insert(failure_entry const &an_entry) {
-			if (!the_log.empty() && the_log.crbegin()->the_position < an_entry.the_position) {
-				the_log.clear();
-			}
+			if (!the_log.empty()) {
+				auto the_max_element =
+					std::max_element(
+						the_log.cbegin(), the_log.cend(),
+						[](failure_entry const &rhs, failure_entry const &lhs) {
+							return rhs.the_position < lhs.the_position;
+						}
+					);
 
-			the_log.push_back(an_entry);
+				if (the_max_element->the_position < an_entry.the_position) {
+					the_log.clear();
+					the_log.push_back(an_entry);
+				}
+				else if (the_max_element->the_position == an_entry.the_position) {
+					the_log.push_back(an_entry);
+				}
+			}
+			else {
+				the_log.push_back(an_entry);
+			}
 		}
 
 	}

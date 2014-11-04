@@ -51,6 +51,12 @@ bool simple_test() {
 	else {
 		std::cout << base_rule::get_error_message(base_rule::match_range(input.cbegin(), input.cend())) << std::endl;
 
+		std::cout << std::endl << std::endl << "The failure_log:" << std::endl;
+		auto const &failure_log = base_rule::get_failure_log();
+		for (auto const &entry: failure_log) {
+			std::cout << (entry.the_position - input.cbegin()) << ": " << entry.the_message << "[" << static_cast<size_t>(entry.the_type) << "]  (" << *entry.the_position << ")" << std::endl;
+		}
+
 		base_rule::clear_failure_log();
 		return true;
 	}
@@ -156,7 +162,7 @@ bool complex_test() {
 		std::cout << std::endl << std::endl << "The failure_log:" << std::endl;
 		auto const &failure_log = base_rule::get_failure_log();
 		for (auto const &entry: failure_log) {
-			std::cout << (entry.the_position - input.cbegin()) << ": " << entry.the_message << "[" << static_cast<size_t>(entry.the_type) << "]" << std::endl;
+			std::cout << (entry.the_position - input.cbegin()) << ": " << entry.the_message << "[" << static_cast<size_t>(entry.the_type) << "]  (" << *entry.the_position << ")" << std::endl;
 		}
 
 		base_rule::clear_failure_log();
