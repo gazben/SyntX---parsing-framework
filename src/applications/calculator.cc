@@ -86,7 +86,7 @@ namespace applications {
 							-character("*/")[(
 								[this](std::string const &s){operations.push(s[0]);}
 							)]
-						<<	-multiplicand[
+						<<	(-multiplicand)[
 								evaluate(numbers, operations)
 							]
 					);
@@ -96,7 +96,7 @@ namespace applications {
 						-character("+-")[(
 							[this](std::string const &s){operations.push(s[0]);}
 						)] 
-					<<	-product[
+					<<	(-product)[
 							evaluate(numbers, operations)
 						]
 				);
