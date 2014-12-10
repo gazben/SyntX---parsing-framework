@@ -25,22 +25,20 @@
 #include <applications/symbolic_expression.h>
 
 namespace applications {
-	symbolic_expression::symbolic_expression() {
+	symbolic_expression::symbolic_expression() : current_root(&root) {
 		using namespace util::parser;
 		
-		tree_node *current_root = &root; 
-
-		expression	<<=	-character("(")[( [&current_root](std::string const &){current_root = current_root->add_child("");} )]
+		expression	<<=	-character("(")[( [this](std::string const &){current_root = current_root->add_child("");} )]
 					<<	*-(
 							(
 									identifier()
 								|	real()
 								|	string()
 								|	character("+-*/!?")
-							)[( [&current_root](std::string const &s){current_root->add_child(s);} )]
+							)[( [this](std::string const &s){current_root->add_child(s);} )]
 							|	expression
 						)
-					<<	-character(")")[( [&current_root](std::string const &){current_root = current_root->parent;} )];
+					<<	-character(")")[( [this](std::string const &){current_root = current_root->parent;} )];
 	}
 
 	bool symbolic_expression::test(std::string const &text) {

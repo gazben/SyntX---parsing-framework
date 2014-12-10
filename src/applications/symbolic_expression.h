@@ -82,6 +82,7 @@ namespace applications {
 
 		private:
 			tree_node root;					/**< The root node of the tree. */
+			tree_node *current_root;		/**< The position in the tree during parsing. */
 			util::parser::rule expression;	/**< The rule that describes a generic symbolic expression. */
 
 		public:
