@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+#ifndef _UTIL_ENUMSET_
+#define _UTIL_ENUMSET_
+
 #include <unordered_set>
 #include <initializer_list>
 
@@ -123,3 +126,4 @@ namespace util {
 			return enum_set<enum_type>(enum_list);
 		}
 }
+#endif // _UTIL_ENUMSET_
