@@ -43,17 +43,17 @@ namespace util {
 			private:
 				std::string the_word; /**< The string to be matched. */
 
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
+
 			public:
 				/**
 				 * Constructor.
 				 * @param the_word the string to be matched
 				 */
 				substring(std::string const &the_word) : the_word(the_word) {}
-
-				/**
-				 * @copydoc util::parser::base_rule::test
-				 */
-				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
 
 				/**
 				 * @copydoc util::parser::base_rule::clone

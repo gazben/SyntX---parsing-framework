@@ -40,17 +40,17 @@ namespace util {
 			private:
 				std::shared_ptr<base_rule> repeated_rule; /**< Rule to be matched zero or more times. */
 
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
+
 			public:
 				/**
 				 * Constructor.
 				 * @param repeated_rule rule to be matched zero or more times
 				 */
 				repetition_or_epsilon(base_rule const &repeated_rule) : repeated_rule(repeated_rule.clone()) {}
-
-				/**
-				 * @copydoc util::parser::base_rule::test
-				 */
-				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
 
 				/**
 				 * @copydoc util::parser::base_rule::clone

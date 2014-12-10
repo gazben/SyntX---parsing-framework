@@ -224,12 +224,6 @@ namespace util {
 				semantic_action the_semantic_action; /**< The semantic action assigned to this rule. */
 				static bool build_ast; /**< Stores whether an AST is to be built. */
 
-			public:
-				/**
-				 * Destructor.
-				 */
-				virtual ~base_rule() {}
-
 				/**
 				 * The virtual method that defines the conditions of matching.
 				 * This method is defined by every descendent of the @ref base_rule class.
@@ -242,6 +236,12 @@ namespace util {
 				 * @note This method may throw an exception (\ref rule::test throws \ref rule::undefined_rule).
 				 */
 				virtual bool test(match_range &context, match_range &the_match_range, std::shared_ptr<node> &ast_root = dont_build_ast) = 0;
+
+			public:
+				/**
+				 * Destructor.
+				 */
+				virtual ~base_rule() {}
 
 				/**
 				 * Contains the operations performed when a rule is tried on the current position.

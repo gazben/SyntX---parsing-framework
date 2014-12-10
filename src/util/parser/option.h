@@ -40,17 +40,17 @@ namespace util {
 			private:
 				std::shared_ptr<base_rule> optional_rule; /**< The optional rule. */
 
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
+
 			public:
 				/**
 				 * Constructor.
 				 * @param optional_rule the optional rule
 				 */
 				option(base_rule const &optional_rule) : optional_rule(optional_rule.clone()) {}
-
-				/**
-				 * @copydoc util::parser::base_rule::test
-				 */
-				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
 
 				/**
 				 * @copydoc util::parser::base_rule::clone

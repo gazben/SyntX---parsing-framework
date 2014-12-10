@@ -42,6 +42,11 @@ namespace util {
 				char range_first;	/**< The lower endpoint of the range. */
 				char range_last;	/**< The upper endpoint of the range. */
 
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
+
 			public:
 				/**
 				 * Constructor.
@@ -58,11 +63,6 @@ namespace util {
 							throw std::invalid_argument(str.str());
 						}
 				}
-
-				/**
-				 * @copydoc util::parser::base_rule::test
-				 */
-				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
 
 				/**
 				 * @copydoc util::parser::base_rule::clone

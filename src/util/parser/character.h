@@ -40,6 +40,11 @@ namespace util {
 			private:
 				std::string allowed_characters; /**< The set of characters that may be consumed by this rule (but only one at a time). */
 
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
+
 			public:
 				/**
 				 * Constructor.
@@ -50,11 +55,6 @@ namespace util {
 				 * the set.
 				 */
 				character(std::string const &allowed_characters) : allowed_characters(allowed_characters) {}
-
-				/**
-				 * @copydoc util::parser::base_rule::test
-				 */
-				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
 
 				/**
 				 * @copydoc util::parser::base_rule::clone

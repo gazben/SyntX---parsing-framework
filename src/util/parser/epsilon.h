@@ -39,8 +39,7 @@ namespace util {
 		 * match.
 		 */
 		class epsilon : public base_rule {
-			public:
-
+			private:
 				/**
 				 * @copydoc util::parser::base_rule::test
 				 */
@@ -49,6 +48,7 @@ namespace util {
 					return true;
 				}
 
+			public:
 				/**
 				 * @copydoc util::parser::base_rule::clone
 				 */

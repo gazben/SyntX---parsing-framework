@@ -36,13 +36,13 @@ namespace util {
 		 * Rule that matches an end-of-line character.
 		 */
 		class eol : public base_rule {
-			public:
-
+			private:
 				/**
 				 * @copydoc util::parser::base_rule::test
 				 */
 				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
 
+			public:
 				/**
 				 * @copydoc util::parser::base_rule::clone
 				 */

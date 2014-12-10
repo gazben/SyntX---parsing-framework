@@ -41,17 +41,17 @@ namespace util {
 				std::shared_ptr<base_rule> a_rule;		/**< The rule to be matched after consuming the whitespaces. */
 				static char whitespace_characters[];	/**< The characters considered as whitespace (except for the newline character). */
 
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
+
 			public:
 				/**
 				 * Constructor.
 				 * @param a_rule rule to be matched after consuming the whitespaces
 				 */
 				whitespace_not_newline(base_rule const &a_rule) : a_rule(a_rule.clone()) {}
-
-				/**
-				 * @copydoc util::parser::base_rule::test
-				 */
-				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
 
 				/**
 				 * @copydoc util::parser::base_rule::clone

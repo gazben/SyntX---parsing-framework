@@ -41,6 +41,11 @@ namespace util {
 				std::shared_ptr<base_rule> first;	/**< The first rule to match. */
 				std::shared_ptr<base_rule> second;	/**< The second rule to match. */
 
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
+
 			public:
 				/**
 				 * Constructor.
@@ -48,11 +53,6 @@ namespace util {
 				 * @param second the second rule to match
 				 */
 				concatenation(base_rule const &first, base_rule const &second) : first(first.clone()), second(second.clone()) {}
-
-				/**
-				 * @copydoc util::parser::base_rule::test
-				 */
-				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
 
 				/**
 				 * @copydoc util::parser::base_rule::clone

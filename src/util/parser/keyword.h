@@ -45,6 +45,11 @@ namespace util {
 				std::string the_word;			/**< The keyword to match. */
 				std::string extra_characters;	/**< The set of extra characters allowed in the keyword. */
 
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
+
 			public:
 				/**
 				 * Constructor.
@@ -54,11 +59,6 @@ namespace util {
 				keyword(std::string const &the_word, std::string const &extra_characters = "_") : 
 					the_word(the_word),
 					extra_characters(extra_characters) {}
-
-				/**
-				 * @copydoc util::parser::base_rule::test
-				 */
-				virtual bool test(base_rule::match_range &context, base_rule::match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
 
 				/**
 				 * @copydoc util::parser::base_rule::clone

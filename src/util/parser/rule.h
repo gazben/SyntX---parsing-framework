@@ -64,6 +64,11 @@ namespace util {
 				std::shared_ptr< std::shared_ptr<base_rule> > the_rule; /**< The address of the pointer storing the address of the composite rule referred to by this object. */
 				std::string rule_name; /**< The name of the rule which is used in the AST. */
 
+				/**
+				 * @copydoc util::parser::base_rule::test
+				 */
+				virtual bool test(match_range &context, match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
+
 			public:	
 				/**
 				 * Constructor.
@@ -92,11 +97,6 @@ namespace util {
 				 * @return a_rule the address of the composite rule
 				 */
 				std::shared_ptr<base_rule> get_rule() {return *the_rule;}
-
-				/**
-				 * @copydoc util::parser::base_rule::test
-				 */
-				virtual bool test(match_range &context, match_range &the_match_range, std::shared_ptr<base_rule::node> &ast_root = base_rule::dont_build_ast) override;
 
 				/**
 				 * @copydoc util::parser::base_rule::clone
