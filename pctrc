@@ -7,7 +7,7 @@
 	(optimization_flag "-O")
 	(optimization_level "0")
 	(extra_options 
-		("-Wall" "-Werror" "-pedantic" "-std=c++11" "-g")
+		("-Wall" "-Werror" "-Wdeprecated" "-pedantic" "-std=c++11" "-g")
 	)
 	(target_directory "bin")
 	(object_directory "obj")
