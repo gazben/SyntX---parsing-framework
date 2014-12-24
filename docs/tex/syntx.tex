@@ -456,6 +456,11 @@ to \texttt{the\_match\_range}, which is a reference of a variable taken as an ar
 If a semantic action has been assigned to the rule, it is called and the result of the matching process is
 given to it as a \texttt{std::string}.
 
+The \texttt{test} method is private as it should only be called by \texttt{match} and never from outside of
+the class. The \texttt{base\_rule} class realizes the \emph{non-virtual interface
+pattern}\footnote{\href{http://en.wikibooks.org/wiki/More_C++_Idioms/Non-Virtual_Interface}{http://en.wikibooks.org/wiki/More\_C++\_Idioms/Non-Virtual\_Interface}}
+with \texttt{match} and \texttt{test}.
+
 The \texttt{base\_rule} class has a virtual funtion called \texttt{clone} the purpose of which is to make the
 entire class hierarchy clonable. More on this can be found on page \pageref{subsec:rule}.
 
@@ -1576,6 +1581,52 @@ It goes without saying that \texttt{enum\_set} allows any desired combination of
 appear in the message. The recommendation is to use the default case though, as messages generated using
 non-terminal or named rules are ambiguous and might be confusing for those who are not aware of how the
 framework operates behind the scenes.
+
+\usubsec{Searching for patterns}{search}
+The default operation of the framework tries to match the main rule from the first chracter and a successful
+match ideally covers the entire input.
+
+Sometimes the grammar of the entire input is not known or not important and just a small, well-defined portion
+of the text is sought after. A
+grep-like\footnote{\href{http://en.wikipedia.org/wiki/Grep}{http://en.wikipedia.org/wiki/Grep}} operation is
+performed by the \texttt{util::parser::search} method.
+
+\begin{center}
+	\begin{minipage}[h]{0.7\textwidth}
+		\begin{lstlisting}[language=c++, breaklines=true, numbers=left]
+rule number;
+number
+		<<= character("(") 
+		<< integer()[(
+				[](std::string const &match){
+					std::cout << "Lambda says: " << match << std::endl;
+				}
+			 )] 
+		<< character(")");
+
+std::string input = "other stuff (3) something else";
+base_rule::match_range context(input.cbegin(), input.cend());
+base_rule::match_range result;
+
+if (util::parser::search(context, number, result)) {
+	std::string found(result.first, result.second);
+	std::cout << "Matched: " << found << std::endl;
+} else
+	std::cout << "Didn't match" << std::endl;
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+The output produced by this code fragment is:
+\begin{center}
+	\begin{minipage}[ht]{0.2\textwidth}
+		\begin{lstlisting}[breaklines=true]
+Lambda says: 3
+Matched: (3)
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
 
 \vfill
 \vfill
