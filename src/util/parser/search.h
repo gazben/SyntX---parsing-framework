@@ -22,33 +22,25 @@
  * THE SOFTWARE.
  */
 
-#ifndef _UTIL_PARSER_PARSER_
-#define _UTIL_PARSER_PARSER_
+#ifndef _UTIL_PARSER_SEARCH_
+#define _UTIL_PARSER_SEARCH_
 
-/*
- * Convenience header for the parser library
- */
-
-#include <util/parser/alternation.h>
 #include <util/parser/base_rule.h>
-#include <util/parser/character.h>
-#include <util/parser/concatenation.h>
-#include <util/parser/debug_action.h>
-#include <util/parser/eol.h>
-#include <util/parser/epsilon.h>
-#include <util/parser/identifier.h>
-#include <util/parser/integer.h>
-#include <util/parser/keyword.h>
-#include <util/parser/option.h>
-#include <util/parser/range.h>
-#include <util/parser/real.h>
-#include <util/parser/repetition.h>
-#include <util/parser/repetition_or_epsilon.h>
-#include <util/parser/rule.h>
-#include <util/parser/search.h>
-#include <util/parser/string.h>
-#include <util/parser/substring.h>
-#include <util/parser/whitespace.h>
-#include <util/parser/whitespace_not_newline.h>
 
-#endif // _UTIL_PARSER_PARSER_
+namespace util {
+	namespace parser {
+		/**
+		 * Searches for a match of the given rule in the context.
+		 * Steps through the context until a match is found or the end of the context
+		 * is reached.
+		 * @param the_context the input of the algorithm
+		 * @param the_rule the main rule of the search
+		 * @param the_result points to the match
+		 * @return true if a successful match was found
+		 */
+		bool search(base_rule::match_range the_context, base_rule &the_rule, base_rule::match_range &the_result);
+	}
+}
+
+#endif // _UTIL_PARSER_SEARCH_
+

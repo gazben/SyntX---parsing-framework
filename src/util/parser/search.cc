@@ -22,33 +22,20 @@
  * THE SOFTWARE.
  */
 
-#ifndef _UTIL_PARSER_PARSER_
-#define _UTIL_PARSER_PARSER_
-
-/*
- * Convenience header for the parser library
- */
-
-#include <util/parser/alternation.h>
-#include <util/parser/base_rule.h>
-#include <util/parser/character.h>
-#include <util/parser/concatenation.h>
-#include <util/parser/debug_action.h>
-#include <util/parser/eol.h>
-#include <util/parser/epsilon.h>
-#include <util/parser/identifier.h>
-#include <util/parser/integer.h>
-#include <util/parser/keyword.h>
-#include <util/parser/option.h>
-#include <util/parser/range.h>
-#include <util/parser/real.h>
-#include <util/parser/repetition.h>
-#include <util/parser/repetition_or_epsilon.h>
-#include <util/parser/rule.h>
 #include <util/parser/search.h>
-#include <util/parser/string.h>
-#include <util/parser/substring.h>
-#include <util/parser/whitespace.h>
-#include <util/parser/whitespace_not_newline.h>
 
-#endif // _UTIL_PARSER_PARSER_
+namespace util {
+	namespace parser {
+		bool search(base_rule::match_range the_context, base_rule &the_rule, base_rule::match_range &the_result) {
+			bool matched = false;
+
+			for (; the_context.first != the_context.second && !matched; ++the_context.first) {
+				base_rule::match_range local(the_context);
+
+				matched = the_rule.match(local, the_result);
+			}
+
+			return matched;
+		}
+	}
+}

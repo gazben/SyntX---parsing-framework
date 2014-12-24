@@ -22,33 +22,27 @@
  * THE SOFTWARE.
  */
 
-#ifndef _UTIL_PARSER_PARSER_
-#define _UTIL_PARSER_PARSER_
+#include <string>
+#include <iostream>
 
-/*
- * Convenience header for the parser library
- */
+#include <util/parser/parser.h>
 
-#include <util/parser/alternation.h>
-#include <util/parser/base_rule.h>
-#include <util/parser/character.h>
-#include <util/parser/concatenation.h>
-#include <util/parser/debug_action.h>
-#include <util/parser/eol.h>
-#include <util/parser/epsilon.h>
-#include <util/parser/identifier.h>
-#include <util/parser/integer.h>
-#include <util/parser/keyword.h>
-#include <util/parser/option.h>
-#include <util/parser/range.h>
-#include <util/parser/real.h>
-#include <util/parser/repetition.h>
-#include <util/parser/repetition_or_epsilon.h>
-#include <util/parser/rule.h>
-#include <util/parser/search.h>
-#include <util/parser/string.h>
-#include <util/parser/substring.h>
-#include <util/parser/whitespace.h>
-#include <util/parser/whitespace_not_newline.h>
+using namespace util::parser;
 
-#endif // _UTIL_PARSER_PARSER_
+int main() {
+	rule number;
+
+	number <<= character("(") << integer()[([](std::string const &match){std::cout << "Lambda says: " << match << std::endl;})] << character(")");
+
+
+	std::string input = "other stuff (3) something else";
+
+	base_rule::match_range context(input.cbegin(), input.cend());
+	base_rule::match_range result;
+
+	if (search(context, number, result))
+		std::cout << "Matched: " << std::string(result.first, result.second) << std::endl;
+	else
+		std::cout << "Didn't match" << std::endl;
+}
+
