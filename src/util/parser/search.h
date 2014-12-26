@@ -25,6 +25,8 @@
 #ifndef _UTIL_PARSER_SEARCH_
 #define _UTIL_PARSER_SEARCH_
 
+#include <functional>
+
 #include <util/parser/base_rule.h>
 
 namespace util {
@@ -33,12 +35,25 @@ namespace util {
 		 * Searches for a match of the given rule in the context.
 		 * Steps through the context until a match is found or the end of the context
 		 * is reached.
-		 * @param the_context the input of the algorithm
+		 * @param the_context the input text of the search
 		 * @param the_rule the main rule of the search
 		 * @param the_result points to the match
 		 * @return true if a successful match was found
 		 */
 		bool search(base_rule::match_range the_context, base_rule &the_rule, base_rule::match_range &the_result);
+
+		/**
+		 * Searches for all the matches of the given rule in the context.
+		 * Steps through the context and evry time there is a match, it calls
+		 * the given \ref semantic_action. It doesn't look for overlapping matches
+		 * (i.e. it jumps to end of a matched range when it continues to search).
+		 * This is merely to speed up the searches.
+		 * @param the_context the input text of the search
+		 * @param the_rule the main rule of the search
+		 * @param an_action the \ref semantic_action that is called at every search -- this is an optional parameter
+		 * @return true if at least one successful match was found
+		 */
+		bool search_all(base_rule::match_range the_context, base_rule &the_rule, base_rule::semantic_action const &an_action = base_rule::semantic_action());
 	}
 }
 

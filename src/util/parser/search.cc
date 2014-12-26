@@ -22,6 +22,8 @@
  * THE SOFTWARE.
  */
 
+#include <string>
+
 #include <util/parser/search.h>
 
 namespace util {
@@ -36,6 +38,26 @@ namespace util {
 			}
 
 			return matched;
+		}
+
+		bool search_all(base_rule::match_range the_context, base_rule &the_rule, base_rule::semantic_action const &an_action) {
+			bool success = false;
+
+			for (; the_context.first != the_context.second; ++the_context.first) {
+				base_rule::match_range local(the_context), the_result;
+
+				bool matched = the_rule.match(local, the_result);
+
+				if (matched) {
+					success = true;
+
+					if (an_action) an_action(std::string(the_result.first, the_result.second));
+
+					the_context.first = the_result.second;
+				}
+			}
+
+			return success;
 		}
 	}
 }

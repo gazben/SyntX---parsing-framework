@@ -23,13 +23,15 @@
  */
 
 #include <string>
+#include <vector>
 #include <iostream>
 
 #include <util/parser/parser.h>
+#include <util/tester/tester.h>
 
 using namespace util::parser;
 
-int main() {
+bool test_0() {
 	rule number;
 
 	number <<= character("(") << integer()[([](std::string const &match){std::cout << "Lambda says: " << match << std::endl;})] << character(")");
@@ -40,9 +42,53 @@ int main() {
 	base_rule::match_range context(input.cbegin(), input.cend());
 	base_rule::match_range result;
 
-	if (search(context, number, result))
+	if (search(context, number, result)) {
 		std::cout << "Matched: " << std::string(result.first, result.second) << std::endl;
-	else
+		return true;
+	}
+	else {
 		std::cout << "Didn't match" << std::endl;
+		return false;
+	}
+}
+
+bool test_1() {
+	rule include, path;
+	std::vector<std::string> includes;
+
+	include <<= -character("#") << -keyword("include") << -character("<") << -path[([&includes](std::string const &a_path){includes.push_back(a_path);})] << -character(">");
+	path <<= +(range('a', 'z') | range('A', 'Z') | range('0', '9') | character("_/."));
+
+	std::string input = R"delimiter(
+		#include <iostream>
+		#include <string>
+		#include <util/parser/parser.h>
+		
+		int main() {
+			std::cout << "Hello" << std::endl;
+		}
+	)delimiter";
+
+	base_rule::match_range context(input.cbegin(), input.cend());
+	base_rule::match_range result;
+
+	if (search_all(context, include, [](std::string const &an_include){std::cout << an_include << std::endl;})) {
+		std::cout << "Matched" << std::endl;
+		for (auto &path: includes) std::cout << "\t" << path << std::endl;
+		return true;
+	}
+	else {
+		std::cout << "Didn't match" << std::endl;
+		return false;
+	}
+}
+
+int main() {
+	util::tester::tester the_tester(__FILE__);
+
+	the_tester.add(test_0);
+	the_tester.add(test_1);
+
+	return the_tester.run();
 }
 

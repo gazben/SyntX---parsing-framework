@@ -1589,7 +1589,7 @@ match ideally covers the entire input.
 Sometimes the grammar of the entire input is not known or not important and just a small, well-defined portion
 of the text is sought after. A
 grep-like\footnote{\href{http://en.wikipedia.org/wiki/Grep}{http://en.wikipedia.org/wiki/Grep}} operation is
-performed by the \texttt{util::parser::search} method.
+performed by the \texttt{util::parser::search} method (called in line 15):
 
 \begin{center}
 	\begin{minipage}[h]{0.7\textwidth}
@@ -1627,6 +1627,74 @@ Matched: (3)
 	\end{minipage}
 \end{center}
 
+The \texttt{search} method looks for a single successful match and exists when it is found or when the end of
+the context is reached.
+
+If every matching substring needs to be processed, \texttt{serach\_all} can be used. As it looks for every
+single match, it can not return the resulting match. Instead, it takes a \texttt{semantic\_action} as the
+third paramter, and calls it every time it finds a match.
+
+The following example looks for includes in a C++ code. It also shows how semantic actions given in the
+definition of the grammar can be used to extract parts of the match. Sometimes this is more useful than
+receiving the entire match, so the third parameter of \texttt{search\_all} is optional.
+
+\begin{center}
+	\begin{minipage}[h]{0.7\textwidth}
+		\begin{lstlisting}[language=c++, breaklines=true, numbers=left]
+rule include, path;
+std::vector<std::string> includes;
+
+include <<= -character("#") 
+		<< -keyword("include")
+		<< -character("<")
+		<< -path[(
+					[&includes](std::string const &a_path){
+						includes.push_back(a_path);
+					}
+				)]
+		<< -character(">");
+
+path <<= +(range('a', 'z') | range('A', 'Z') | range('0', '9') | character("_/."));
+
+std::string input = R"delimiter(
+	#include <iostream>
+	#include <string>
+	#include <util/parser/parser.h>
+	
+	int main() {
+		std::cout << "Hello" << std::endl;
+	}
+)delimiter";
+
+base_rule::match_range context(input.cbegin(), input.cend());
+base_rule::match_range result;
+
+if (search_all(context, include, [](std::string const &an_include){std::cout << an_include << std::endl;})) {
+	std::cout << "Matched" << std::endl;
+	for (auto &path: includes)
+		std::cout << "\t" << path << std::endl;
+}
+else {
+	std::cout << "Didn't match" << std::endl;
+}
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
+
+The output of this code fragment is:
+\begin{center}
+	\begin{minipage}[ht]{0.4\textwidth}
+		\begin{lstlisting}[breaklines=true]
+#include <iostream>
+#include <string>
+#include <util/parser/parser.h>
+Matched
+	iostream
+	string
+	util/parser/parser.h
+		\end{lstlisting}
+	\end{minipage}
+\end{center}
 
 \vfill
 \vfill
