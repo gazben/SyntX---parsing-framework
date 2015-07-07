@@ -1,0 +1,88 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(SyntX)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+
+include_directories(
+ src/
+ /usr/include
+)
+
+add_executable(
+  SythX
+   src/util/parser/keyword.h
+   src/util/parser/integer.h
+   src/util/parser/option.cc
+   src/util/parser/substring.h
+   src/applications/calculator.cc
+   src/util/parser/keyword.cc
+   src/util/parser/alternation.cc
+   src/applications/lookahead.cc
+   src/util/parser/string.h
+   src/applications/spice_raw_to_csv.h
+   src/util/parser/search.h
+   src/util/parser/character.h
+   src/util/parser/integer.cc
+   src/util/parser/identifier.h
+   src/applications/symbolic_expression.h
+   src/util/tester/tester.cc
+   src/util/parser/rule.cc
+   src/util/parser/option.h
+   src/util/parser
+   src/util/parser/substring.cc
+   src/util/parser/base_rule.cc
+   src/util/parser/whitespace_not_newline.h
+   src/util/tester/tester.h
+   src/util/enum_set.h
+   src/util/parser/base_rule.h
+   src/util/parser/range.cc
+   src/util/parser/repetition_or_epsilon.cc
+   src/util/parser/debug_action.h
+   src/util/parser/real.h
+   src/util/parser/search.cc
+   src/util/parser/concatenation.h
+   src/util
+   src/applications/lookahead.h
+   src/util/parser/whitespace_not_newline.cc
+   src/util/parser/identifier.cc
+   src/applications/calculator.h
+   src/util/parser/alternation.h
+   src/util/parser/real.cc
+   src/util/parser/whitespace.h
+   src/util/parser/epsilon.h
+   src/util/parser/parser.h
+   src/util/parser/eol.cc
+   src/util/parser/repetition.h
+   src/util/parser/whitespace.cc
+   src/util/parser/character.cc
+   src/util/parser/string.cc
+   src/util/parser/rule.h
+   src/util/parser/repetition.cc
+   src/util/parser/repetition_or_epsilon.h
+   src/util/parser/range.h
+   src/applications/symbolic_expression.cc
+   src/applications/spice_raw_to_csv.cc
+   src/util/tester
+   src/util/parser/eol.h
+   src/util/parser/concatenation.cc
+
+   #src/ui/calculator.cc
+   #src/ui/symbolic_expression.cc
+   #src/ui/spice_raw_to_csv.cc
+   #src/ui/lookahead.cc
+
+   #src/test/util/memory.cc
+   #src/test/util/parser/symbe.cc
+   #src/test/util/parser/ast_test.cc
+   #src/test/util/parser/search.cc
+   #src/test/util/parser/test_language_ast_parser.cc
+   #src/test/util/parser/language_ast_parser.cc
+   #src/test/util/parser/simple_test.cc
+   #src/test/util/enum_set.cc
+   #src/test/util/parser/language_ast_parser.h
+   #src/test/util/parser/error_test.cc
+   #src/test/util/parser/parser.cc
+   #src/test/util/parser
+   #src/test/util/parser/language_ast.cc
+   #src/test/util/functional.cc
+   src/test/ltl_main.cc
+)
