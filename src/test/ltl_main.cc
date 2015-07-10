@@ -91,22 +91,22 @@ class ast_tree_svg_printer{
             if(offset % 2 == 0 )
                 offset +=1;
 
-
             x_pos = ((svg_width / (std::pow(2, depth + 1))) * offset);
-            y_pos = depth * 60 + 70;
+            y_pos = depth * 120 + 70;
 
             //SYMBOL
             svg_file_content +=
                     "<ellipse cx=\"" +
-                    std::to_string(x_pos) +
+                    std::to_string(x_pos + (text.length() * 3.4)) +
                     "\" cy=\"" +
                     std::to_string(y_pos) +
-                    "\" rx=\"30\" ry=\"30\"/>";
+                    "\" rx=\""+ std::to_string( 50 + text.length() * 1.6 ) + "\" ry=\"35\" " +
+                    "style=\""
+                            "stroke:#ff0000;stroke-width: 2;stroke: black;fill: none;\"/>";
             svg_file_content += "<text x=\"" + std::to_string(x_pos) + "\" y=\"" + std::to_string(y_pos) + "\"" + " fill=\"black\">";
             //svg_file_content += std::to_string(level_pos) + "</text>";
             svg_file_content += text + "</text>";
             svg_file_content += "\n";
-
 
             for (unsigned int i = 0; i < node->children.size(); i++){
                 size_t temp_level_pos = level_pos * 2;
@@ -114,7 +114,6 @@ class ast_tree_svg_printer{
                     temp_level_pos--;
                 else
                     temp_level_pos++;
-
                 create_svg(node->children[i], depth + 1, temp_level_pos);
             }
         }
@@ -126,7 +125,7 @@ public:
 
         size_t depth = count_depth(root);
         svg_width = pow(2, depth)* 80;
-        svg_height =  depth * 100;
+        svg_height =  depth * 150 + 70;
 
         create_svg(root, 0);
 
