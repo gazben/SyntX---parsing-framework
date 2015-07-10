@@ -34,19 +34,6 @@ using namespace util::parser;
 
 class ast_tree_svg_printer{
   private:
-
-    class tree_position{
-    public:
-        size_t y;
-        size_t x;
-        size_t children_count;
-
-        tree_position(size_t _x = 0, size_t _y = 0, size_t _children_count = 0)
-                :x(_x), y(_y), children_count(_children_count)
-        {
-        }
-    };
-
     std::shared_ptr<base_rule::node> root;
     size_t svg_width = 0;
     size_t svg_height = 0;
@@ -69,7 +56,7 @@ class ast_tree_svg_printer{
         return (node->children.size() == 0)? true : false;
     }
 
-    void create_svg(std::shared_ptr<base_rule::node> const &node, size_t depth, size_t level_pos = 1, const tree_position parent_pos = tree_position()){
+    void create_svg(std::shared_ptr<base_rule::node> const &node, size_t depth, size_t level_pos = 1){
         if(node) {
             //TEXT
             std::string text;
@@ -100,10 +87,21 @@ class ast_tree_svg_printer{
             size_t x_pos;
             size_t y_pos;
 
-            x_pos = ((svg_width / (std::pow(2, depth + 1))) * level_pos);
-            y_pos = depth * 40 + 30;
+            size_t offset = level_pos;
+            if(offset % 2 == 0 )
+                offset +=1;
+
+
+            x_pos = ((svg_width / (std::pow(2, depth + 1))) * offset);
+            y_pos = depth * 60 + 70;
+
             //SYMBOL
-            //svg_file_content += "<rect x=\"" + std::to_string(x_pos) + "\" y=\"" + std::to_string(y_pos) + "\" width=\"30\" height=\"30\"/>";
+            svg_file_content +=
+                    "<ellipse cx=\"" +
+                    std::to_string(x_pos) +
+                    "\" cy=\"" +
+                    std::to_string(y_pos) +
+                    "\" rx=\"30\" ry=\"30\"/>";
             svg_file_content += "<text x=\"" + std::to_string(x_pos) + "\" y=\"" + std::to_string(y_pos) + "\"" + " fill=\"black\">";
             //svg_file_content += std::to_string(level_pos) + "</text>";
             svg_file_content += text + "</text>";
@@ -111,31 +109,43 @@ class ast_tree_svg_printer{
 
 
             for (unsigned int i = 0; i < node->children.size(); i++){
-                size_t temp_level_pos = level_pos * 2 - 1 + i;  //magic
-                create_svg(node->children[i], depth + 1, temp_level_pos, tree_position(x_pos, y_pos, node->children.size()));
+                size_t temp_level_pos = level_pos * 2;
+                if(i == 0)
+                    temp_level_pos--;
+                else
+                    temp_level_pos++;
+
+                create_svg(node->children[i], depth + 1, temp_level_pos);
             }
         }
     }
 public:
-    void write_svg(std::shared_ptr<base_rule::node> const &node, std::string path = "ast.svg"){
+    void write_svg(std::shared_ptr<base_rule::node> const &node, std::string path = "ast.html"){
+        using namespace std;
         root = node;
 
         size_t depth = count_depth(root);
-        svg_width = std::pow(2, depth)* 50;
+        svg_width = pow(2, depth)* 80;
         svg_height =  depth * 100;
 
         create_svg(root, 0);
 
-        std::ofstream svg_file;
+        ofstream svg_file;
         svg_file.open(path);
 
-        svg_file << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>" << std::endl;
-        svg_file << "<svg width=\"" << std::to_string(svg_width) << "\"  " << "height=\"" << std::to_string(svg_height) << "\">" << std::endl;
+        //svg_file << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>" << endl;
+        svg_file << "<html><head></head><body>" << endl;
+        svg_file << "<svg width=\"" << to_string(svg_width) << "\"  " << "height=\"" << to_string(svg_height) << "\">" << std::endl;
 
-        svg_file << svg_file_content << std::endl;
+        svg_file << svg_file_content << endl;
 
-        svg_file << "</svg>";
+        svg_file << "</svg>" << endl;
+        svg_file << "</body></html>";
+        svg_file.close();
 
+        cout << "SVG_Height: " << svg_height << endl;
+        cout << "SVG_Width: " << svg_width << endl;
+        cout << "AST_depth: " << depth << endl;
     }
 };
 
