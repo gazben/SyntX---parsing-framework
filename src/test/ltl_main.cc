@@ -39,6 +39,15 @@ class ast_tree_svg_printer{
     size_t svg_height = 0;
     std::string svg_file_content;
 
+    struct vector {
+    vector(double _x = 0, double _y = 0)
+        :x(_x), y(_y)
+    {
+    }
+        double x;
+        double y;
+    };
+
     size_t count_depth(std::shared_ptr<base_rule::node> const &node, size_t depth = 0){
         static size_t max_depth = 0;
 
@@ -52,11 +61,7 @@ class ast_tree_svg_printer{
         return max_depth;
     }
 
-    bool isLeaf(std::shared_ptr<base_rule::node> const &node){
-        return (node->children.size() == 0)? true : false;
-    }
-
-    void create_svg(std::shared_ptr<base_rule::node> const &node, size_t depth, size_t level_pos = 1){
+    void create_svg(std::shared_ptr<base_rule::node> const &node, size_t depth, size_t level_pos = 1, vector parentLinePoint = vector()){
         if(node) {
             //TEXT
             std::string text;
@@ -95,26 +100,46 @@ class ast_tree_svg_printer{
             y_pos = depth * 120 + 70;
 
             //SYMBOL
+            double svg_ellipse_rx = 50 + text.length() * 1.6;
+            double svg_ellipse_ry = 35;
+
             svg_file_content +=
                     "<ellipse cx=\"" +
                     std::to_string(x_pos + (text.length() * 3.4)) +
                     "\" cy=\"" +
                     std::to_string(y_pos) +
-                    "\" rx=\""+ std::to_string( 50 + text.length() * 1.6 ) + "\" ry=\"35\" " +
-                    "style=\""
+                    "\" rx=\""+ std::to_string( svg_ellipse_rx ) +
+                    "\" ry=\"" + std::to_string( svg_ellipse_ry ) +
+                    "\" style=\""
                             "stroke:#ff0000;stroke-width: 2;stroke: black;fill: none;\"/>";
             svg_file_content += "<text x=\"" + std::to_string(x_pos) + "\" y=\"" + std::to_string(y_pos) + "\"" + " fill=\"black\">";
-            //svg_file_content += std::to_string(level_pos) + "</text>";
             svg_file_content += text + "</text>";
             svg_file_content += "\n";
+            if( depth != 0 ){
+                svg_file_content +=
+                        "<line x1=\"" + std::to_string(parentLinePoint.x) +
+                        "\" y1=\"" + std::to_string(parentLinePoint.y) +
+                        "\" x2=\"" + std::to_string(x_pos + svg_ellipse_rx / 2.0) +
+                        "\" y2=\"" + std::to_string(y_pos - svg_ellipse_ry / 1.2) +
+                        "\" style=\"stroke: black;stroke-width:3\" />";
+            }
+
 
             for (unsigned int i = 0; i < node->children.size(); i++){
                 size_t temp_level_pos = level_pos * 2;
-                if(i == 0)
+                vector linePoint;
+                if(i == 0){
                     temp_level_pos--;
-                else
+                    linePoint.x = x_pos;
+                    linePoint.y = y_pos + svg_ellipse_ry;
+                }
+                else{
                     temp_level_pos++;
-                create_svg(node->children[i], depth + 1, temp_level_pos);
+                    linePoint.x = x_pos + svg_ellipse_rx;
+                    linePoint.y = y_pos + svg_ellipse_ry;
+                }
+
+                create_svg(node->children[i], depth + 1, temp_level_pos, linePoint);
             }
         }
     }
@@ -124,8 +149,8 @@ public:
         root = node;
 
         size_t depth = count_depth(root);
-        svg_width = pow(2, depth)* 80;
-        svg_height =  depth * 150 + 70;
+        svg_width = pow(2, depth)* 70;
+        svg_height = depth * 150 + 70;
 
         create_svg(root, 0);
 
