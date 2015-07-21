@@ -50,5 +50,6 @@
 #include <util/parser/substring.h>
 #include <util/parser/whitespace.h>
 #include <util/parser/whitespace_not_newline.h>
+#include <util/parser/ast_draw.h>
 
 #endif // _UTIL_PARSER_PARSER_
